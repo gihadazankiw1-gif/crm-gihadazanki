@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gihad Azanki | Planejador Financeiro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23000000'/><text x='12' y='72' font-family='Montserrat, sans-serif' font-size='60' font-weight='900' fill='%23FFD500' letter-spacing='-5'>G</text><text x='52' y='72' font-family='Montserrat, sans-serif' font-size='60' font-weight='900' fill='%23FFFFFF'>A</text><path d='M45 55 L85 20 L85 35 M85 20 L70 20' stroke='%23FFD500' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <style>
+        :root{
+            /* Paleta de Cores Atualizada - Preto Absoluto e Amarelo Vivo */
+            --bg-dark: #000000; /* Preto absoluto no fundo */
+            --bg-card: #000000; /* Preto absoluto nos cards */
+            --bg-input: #0F0F0F; /* Contraste bem leve para inputs e hover */
+            --border: #262626; /* Bordas sutis para separar os elementos do fundo preto */
+            --border-hover: #4A4A4A; 
+            --yellow: #FFD500; /* Amarelo vivo/vibrante */
+            --yellow-hover: #FFC300; 
+            --text-main: #FFFFFF; /* Branco puro */
+            --text-muted: #808080; /* Cinza para textos secundários */
+            
+            /* Cores de status */
+            --green: #059669;
+            --red: #dc2626;
+            --blue: #2563eb;
+            --amber: #d97706;
+        }
+        
+        * { box-sizing:border-box; }
+        
+        body { font-family:'Montserrat', sans-serif; background:var(--bg-dark); margin:0; padding:0; color:var(--text-main); zoom:0.9; }
+        
+        #loadingScreen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:99999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:15px; }
+        .ld-bar { width:220px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+        .ld-bar-fill { width:40%; height:100%; background:var(--yellow); border-radius:2px; animation:ldSlide 1.2s ease-in-out infinite; }
+        @keyframes ldSlide { 0% {transform:translateX(-150%);} 100% {transform:translateX(600%);} }
+        
+        h2 { margin-top:0; color:#fff; border-bottom:2px solid var(--yellow); padding-bottom:10px; font-size:17px; text-transform:uppercase; letter-spacing:1px; font-weight: 700; }
+        h3.section-subtitle { font-size:12px; color:var(--yellow); text-transform:uppercase; margin:15px 0 10px; letter-spacing:1px; font-weight: 600; }
+
+        /* NAV */
+        .top-nav { background:var(--bg-dark); border-bottom:1px solid var(--border); padding:15px 30px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-area h1 { margin:0; color:var(--text-main); font-size:22px; letter-spacing:1px; font-weight:900; }
+        .logo-area p { margin:2px 0 0; color:var(--yellow); font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight: 600; }
+        
+        .nav-buttons { display:flex; gap:8px; flex-wrap:wrap; }
+        .nav-btn { background:transparent; color:var(--text-muted); border:1px solid var(--border); padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:600; transition:all .2s; font-size:12px; font-family: inherit; }
+        .nav-btn:hover { border-color:var(--yellow); color:var(--text-main); }
+        .nav-btn.active { background:var(--yellow); color:var(--bg-dark); border-color:var(--yellow); font-weight: 800; }
+        
+        .right-controls { display:flex; gap:10px; align-items:center; }
+        .backup-btn { background:transparent; color:var(--yellow); border:1px solid var(--yellow); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700; transition:all .3s; font-family: inherit; }
+        .backup-btn:hover { background:var(--yellow); color:var(--bg-dark); }
+        .backup-btn.overdue { color:var(--red); border-color:var(--red); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.6;} }
+        
+        .reset-btn { background:transparent; color:var(--red); border:1px solid var(--red); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:700; font-family: inherit; }
+        .reset-btn:hover { background:var(--red); color:#fff; }
+        .restore-label { padding:6px 12px; border-radius:6px; border:1px solid var(--border-hover); color:var(--text-main); cursor:pointer; font-size:12px; font-weight:700; }
+        .restore-label:hover { border-color: var(--yellow); color: var(--yellow); }
+        .user-badge { background:var(--bg-input); border:1px solid var(--border); color:var(--text-main); padding:8px 18px; border-radius:25px; font-weight:700; font-size:13px; }
+        .save-indicator { font-size:11px; color:var(--green); padding:4px 10px; font-weight:bold; min-width:60px; }
+
+        /* MOBILE BOTTOM NAV */
+        .mobile-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--bg-dark); border-top:1px solid var(--border); z-index:200; padding:6px 0 max(6px,env(safe-area-inset-bottom)); }
+        .mobile-nav-inner { display:flex; }
+        .mn-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--text-muted); cursor:pointer; padding:6px 2px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; transition:color .2s; font-family: inherit; }
+        .mn-icon { font-size:20px; }
+        .mn-btn.active { color:var(--yellow); }
+
+        /* TABS */
+        .tab-content { display:none; padding:30px; max-width:1550px; margin:0 auto; animation:fadeIn .3s ease; }
+        .tab-content.active { display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(5px);} to{opacity:1;transform:translateY(0);} }
+        .container-flex { display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+        .card { flex:1; min-width:330px; background:var(--bg-card); padding:25px; border-radius:18px; border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,.8); }
+        .card.highlight { border-color:var(--yellow); box-shadow:0 0 25px rgba(255, 213, 0, 0.1); }
+        .col-left { flex:0 0 350px; } .col-main { flex:1; min-width:600px; }
+        .general-column { flex:1; min-width:340px; display:flex; flex-direction:column; gap:20px; }
+
+        /* FORMS */
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+        .input-group { display:flex; flex-direction:column; gap:5px; }
+        .input-group label { font-size:12px; color:var(--text-muted); font-weight:700; }
+        .input-group input, .input-group select, .input-group textarea { padding:12px 15px; border:1px solid var(--border-hover); background:var(--bg-input); color:#fff; border-radius:10px; outline:none; font-size:14px; font-family: inherit; transition: border-color 0.2s; }
+        .input-group textarea { resize:vertical; min-height:90px; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color:var(--yellow); }
+        .btn-primary { background:var(--yellow); color:var(--bg-dark); border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:800; transition:.2s; font-family: inherit; font-size: 14px; }
+        .btn-primary:hover { background:var(--yellow-hover); }
+        .btn-delete-large { background:var(--red); color:#fff; border:none; padding:15px; border-radius:10px; font-weight:700; cursor:pointer; width:100%; transition:.2s; margin-top:25px; font-size:14px; font-family: inherit; }
+        .btn-delete-large:hover { background:#b91c1c; }
+        .btn-delete { background:var(--border-hover); color:#fc8181; border:none; padding:5px 10px; border-radius:10px; cursor:pointer; font-size:11px; font-weight:bold; font-family: inherit; }
+        .btn-delete:hover { background:var(--red); color:#fff; }
+        .search-add-group { display:flex; gap:10px; margin-bottom:15px; }
+        .search-add-group input { flex:1; padding:12px; border-radius:25px; border:1px solid var(--border-hover); background:var(--bg-input); color:#fff; outline:none; font-family: inherit; }
+        .search-add-group input:focus { border-color: var(--yellow); }
+        .search-add-group button { padding:10px 20px; border-radius:25px; border:none; background:var(--yellow); color:var(--bg-dark); font-weight:800; cursor:pointer; font-family: inherit; }
+
+        /* LISTS */
+        .list { list-style:none; padding:0; margin:0; }
+        .list-item { background:var(--bg-input); border:1px solid var(--border); padding:12px 15px; display:flex; justify-content:space-between; align-items:center; border-radius:14px; margin-bottom:8px; cursor:pointer; transition:all .2s; font-weight: 500; }
+        .list-item:hover { border-color:var(--yellow); }
+        .list-item.selected { border-color:var(--yellow); color:var(--yellow); font-weight: 700; }
+        .list.has-selection .list-item:not(.selected) { opacity:.4; filter:grayscale(1); }
+        .empty-msg { color:var(--text-muted); font-style:italic; text-align:center; padding:20px; font-size:13px; }
+        .scroll-area-clients { height:390px; overflow-y:auto; }
+
+        /* TASKS */
+        .pf-bar { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+        .pf-btn { background:var(--bg-input); border:1px solid var(--border); color:var(--text-main); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:11px; font-weight:700; transition:all .2s; font-family: inherit; }
+        .pf-btn:hover { border-color:var(--yellow); }
+        .pf-btn.active { background:var(--yellow); color:var(--bg-dark); border-color:var(--yellow); }
+        .pf-btn.act-alta { background:var(--red)!important; color:#fff!important; border-color:var(--red)!important; }
+        .pf-btn.act-media { background:var(--amber)!important; color:#fff!important; border-color:var(--amber)!important; }
+        
+        .task-add-bar { display:flex; gap:8px; margin-bottom:16px; }
+        .task-add-bar input { flex:1; padding:10px 15px; border-radius:10px; border:1px solid var(--border-hover); background:var(--bg-input); color:#fff; outline:none; font-size:14px; font-family: inherit; }
+        .task-add-bar input:focus { border-color:var(--yellow); }
+        .task-add-bar select { padding:10px 8px; border-radius:10px; border:1px solid var(--border-hover); background:var(--bg-input); color:#fff; outline:none; font-size:13px; cursor:pointer; font-family: inherit; }
+        .task-add-bar button { padding:10px 18px; border-radius:10px; border:none; background:var(--yellow); color:var(--bg-dark); font-weight:800; cursor:pointer; white-space:nowrap; font-family: inherit; }
+        
+        .task-item { background:var(--bg-input); border:1px solid var(--border); padding:13px 15px; display:flex; align-items:center; border-radius:12px; margin-bottom:8px; transition:all .2s; gap:10px; }
+        .task-item:hover { border-color:var(--border-hover); }
+        .task-item.p-alta { border-left:3px solid var(--red); }
+        .task-item.p-media { border-left:3px solid var(--amber); }
+        .task-item.p-normal { border-left:3px solid var(--border-hover); }
+        .task-item.done-item { opacity:.4; background:var(--bg-dark); }
+        .task-item .task-del { opacity:0; transition:opacity .15s; margin-left:auto; flex-shrink:0; }
+        .task-item:hover .task-del { opacity:1; }
+        .task-item.done-item .task-del { opacity:1; }
+        
+        .task-checkbox { accent-color:var(--yellow); width:18px; height:18px; flex-shrink:0; cursor:pointer; }
+        .task-label { flex:1; cursor:pointer; font-size:14px; line-height:1.4; font-weight: 500; }
+        .task-label.struck { text-decoration:line-through; color:var(--text-muted); }
+        .priority-pip { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .p-alta .priority-pip { background:var(--red); }
+        .p-media .priority-pip { background:var(--amber); }
+        .p-normal .priority-pip { background:var(--border-hover); }
+        
+        .task-scroll { height:260px; overflow-y:auto; padding-right:4px; }
+        .task-scroll-sm { height:140px; overflow-y:auto; padding-right:4px; margin-top:8px; }
+        .cgroup { margin-bottom:20px; }
+        .cgroup-header { display:flex; justify-content:space-between; align-items:center; padding:7px 12px; background:var(--bg-input); border-radius:8px; margin-bottom:8px; border:1px solid var(--border); }
+        .cgroup-name { font-size:12px; font-weight:700; color:var(--yellow); text-transform:uppercase; letter-spacing:.5px; }
+        .cgroup-count { font-size:10px; color:var(--bg-dark); background:var(--yellow); padding:3px 8px; border-radius:10px; font-weight: bold; }
+        .gen-scroll { height:500px; overflow-y:auto; padding-right:4px; }
+
+        /* ENTREGAS */
+        .timeline-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:15px; }
+        .timeline-card { background:var(--bg-input); border:1px solid var(--border); padding:15px; border-radius:12px; text-align:center; }
+        .timeline-card h4 { margin:0 0 10px; font-size:13px; color:var(--yellow); font-weight: 700; }
+        .timeline-card select { width:100%; margin-bottom:8px; padding:8px; border-radius:6px; background:var(--bg-dark); color:#fff; border:1px solid var(--border); font-size:12px; font-family: inherit; }
+        .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+        .product-card { background:var(--bg-input); border:1px solid var(--border); padding:15px; border-radius:12px; display:flex; flex-direction:column; gap:8px; }
+        .product-card-header { display:flex; justify-content:space-between; font-size:13px; font-weight:700; }
+        .product-inputs { display:flex; gap:10px; }
+        .product-inputs select, .product-inputs input { flex:1; padding:8px; border-radius:6px; background:var(--bg-dark); color:#fff; border:1px solid var(--border); font-size:12px; font-family: inherit; }
+        .status-contratado { border-left:4px solid #059669; } .status-potencial { border-left:4px solid #d97706; }
+        .status-nao-contratado { border-left:4px solid #dc2626; } .status-em-aberto { border-left:4px solid #2563eb; }
+
+        /* CARREIRA */
+        .career-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; background:var(--bg-input); padding:15px 25px; border-radius:12px; border:1px solid var(--border); }
+        .progress-block { margin-bottom:20px; }
+        .progress-labels { display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; font-weight:700; }
+        .progress-bar-container { background:var(--bg-input); height:16px; border-radius:10px; border:1px solid var(--border); overflow:hidden; }
+        .progress-bar-fill { background:linear-gradient(90deg, #b89839, var(--yellow)); height:100%; width:0%; transition:width .5s ease; }
+
+        /* TAGS */
+        .client-type-tag { font-size:10px; padding:3px 6px; border-radius:4px; font-weight:800; margin-left:10px; }
+        .tag-proprio { background:var(--green); color:#fff; } .tag-estrutura { background:var(--border-hover); color:#fff; }
+        .task-count-badge { background:var(--red); color:#fff; font-size:10px; font-weight:800; padding:3px 7px; border-radius:10px; margin-left:5px; }
+        
+        ::-webkit-scrollbar { width:6px; } 
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:10px; } 
+        ::-webkit-scrollbar-thumb:hover { background:var(--yellow); }
+
+        /* DASHBOARD */
+        .dash-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:20px; margin-bottom:20px; }
+        .metric-box { background:var(--bg-card); border:1px solid var(--border); border-radius:15px; padding:20px; text-align:center; box-shadow:0 5px 20px rgba(0,0,0,.5); transition:.3s; }
+        .metric-box:hover { border-color:var(--yellow); transform: translateY(-3px); }
+        .metric-box h3 { margin:0; font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .metric-box .val { font-size:28px; font-weight:900; color:#fff; margin-top:10px; }
+        .metric-sub { font-size:11px; color:var(--yellow); margin-top:5px; font-weight:700; }
+        .dash-missing-list { background:var(--bg-input); border:1px solid var(--border); border-radius:15px; padding:20px; overflow-y:auto; }
+        .dash-missing-list ul { list-style:none; padding:0; margin:0; }
+        .dash-missing-list li { padding:12px 10px; border-bottom:1px solid var(--border); font-size:13px; display:flex; justify-content:space-between; align-items:center; font-weight: 500; }
+        .dash-missing-list li:last-child { border-bottom:none; } .dash-missing-list .tags { color:var(--red); font-weight:700; font-size: 11px; }
+        .dash-chart-container { background:var(--bg-input); border:1px solid var(--border); border-radius:15px; padding:20px; text-align:center; }
+        .toggle-chart-btn { background:var(--border-hover); border:none; color:#fff; padding:8px 15px; border-radius:20px; cursor:pointer; font-size:12px; margin-bottom:15px; transition:.2s; font-family: inherit; font-weight: 600; }
+        .toggle-chart-btn.active { background:var(--yellow); color:var(--bg-dark); font-weight:800; }
+        .off-bar-wrap { text-align:left; margin-bottom:15px; }
+        .off-bar-title { font-size:13px; margin-bottom:5px; font-weight:700; display:flex; justify-content:space-between; }
+        .off-bar-bg { background:var(--bg-dark); height:25px; border-radius:5px; border:1px solid var(--border); overflow:hidden; display:flex; }
+        .off-bar-fill { height:100%; transition:width .5s ease; }
+        .off-bar-potencial { height:100%; transition:width .5s ease; opacity:0.4; }
+
+        /* MODAL */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.85); z-index:9999; align-items:center; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-box { background:var(--bg-card); border:1px solid var(--border-hover); border-radius:18px; padding:35px; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,1); }
+        .modal-box h3 { color:#fff; margin:0 0 12px; font-size:20px; font-weight: 800; }
+        .modal-box p { color:var(--text-muted); font-size:14px; margin:0 0 25px; line-height:1.6; font-weight: 500; }
+        .modal-client-name { color:var(--yellow); font-weight:800; }
+        .modal-actions { display:flex; gap:10px; justify-content:center; }
+        .modal-cancel { background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-hover); padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:700; font-family: inherit; }
+        .modal-cancel:hover { border-color: var(--text-main); }
+        .modal-confirm-btn { background:var(--red); color:#fff; border:none; padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:700; font-family: inherit; }
+        .modal-confirm-btn:hover { background:#b91c1c; }
+
+        /* ======================== MOBILE RESPONSIVE ======================== */
+        @media (max-width: 768px) {
+            .mobile-nav { display: block; }
+            .nav-buttons { display: none; }
+            .top-nav { padding: 15px; gap: 8px; flex-wrap: wrap; justify-content: center; text-align: center; }
+            .logo-area { justify-content: center; flex-direction: column; gap: 8px; }
+            .logo-area h1 { font-size: 18px; }
+            .logo-area p { font-size: 9px; }
+            .user-badge { display: none; }
+            .right-controls { gap: 6px; width: 100%; justify-content: center; margin-top: 10px; }
+            .backup-btn, .reset-btn, .restore-label { padding: 6px 10px; font-size: 11px; }
+            .tab-content { padding: 15px 15px 80px; }
+            .container-flex { flex-direction: column; gap: 15px; }
+            .col-left { flex: none; width: 100%; }
+            .col-main { min-width: 0 !important; width: 100%; }
+            .general-column { min-width: 0; }
+            .card { min-width: 0 !important; padding: 20px; border-radius: 14px; }
+            .dash-metrics { grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 15px; }
+            .metric-box { padding: 15px; }
+            .metric-box .val { font-size: 22px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .input-group input, .input-group select, .input-group textarea { font-size: 16px; } 
+            .timeline-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+            .products-grid { grid-template-columns: 1fr; }
+            .career-header { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .scroll-area-clients { height: 250px; }
+            .task-scroll { height: 220px; }
+            .task-scroll-sm { height: 140px; }
+            .gen-scroll { height: 350px; }
+            .task-add-bar { flex-wrap: wrap; }
+            .task-add-bar select { width: 100%; }
+            .task-item .task-del { opacity: 1; } 
+            .dash-chart-container { padding-top: 15px; height: auto !important; }
+            .col-left[style*="flex: 0 0 350px"] { flex: none; width: 100%; }
+        }
+        @media (max-width: 420px) {
+            .dash-metrics { grid-template-columns: repeat(2,1fr); gap: 10px; }
+            .timeline-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingScreen">
+    <svg width="80" height="60" viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 10px;">
+        <path d="M 60 80 L 85 20 L 110 80" stroke="#FFFFFF" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 55 25 C 45 15 25 15 15 30 C 5 45 10 70 30 75 C 45 80 55 70 55 70" stroke="#FFD500" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path d="M 35 55 L 60 55 L 75 70 L 105 25" stroke="#FFD500" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 85 25 L 105 25 L 105 45" stroke="#FFD500" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div style="color:#808080;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Carregando sistema...</div>
+    <div class="ld-bar"><div class="ld-bar-fill"></div></div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <h3 id="modalTitle"></h3><p id="modalMessage"></p>
+        <div class="modal-actions">
+            <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+            <button class="modal-confirm-btn" id="modalConfirmBtn">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-inner">
+        <button class="mn-btn active" id="mn-tab-dashboard" onclick="switchTab('tab-dashboard',null)"><span class="mn-icon">📊</span>Dash</button>
+        <button class="mn-btn" id="mn-tab-capa" onclick="switchTab('tab-capa',null)"><span class="mn-icon">👤</span>Clientes</button>
+        <button class="mn-btn" id="mn-tab-tarefas" onclick="switchTab('tab-tarefas',null)"><span class="mn-icon">⚡</span>Tarefas</button>
+        <button class="mn-btn" id="mn-tab-entregas" onclick="switchTab('tab-entregas',null)"><span class="mn-icon">📋</span>Entregas</button>
+        <button class="mn-btn" id="mn-tab-carreira" onclick="switchTab('tab-carreira',null)"><span class="mn-icon">🏆</span>Carreira</button>
+    </div>
+</div>
+
+<nav class="top-nav">
+    <div class="logo-area">
+        <div>
+            <h1>Gihad Azanki | Planejador Financeiro</h1>
+        </div>
+    </div>
+    <div class="nav-buttons">
+        <button class="nav-btn active" onclick="switchTab('tab-dashboard',this)">📊 Dashboard</button>
+        <button class="nav-btn" onclick="switchTab('tab-capa',this)">👤 Base de Clientes</button>
+        <button class="nav-btn" onclick="switchTab('tab-tarefas',this)">⚡ Gestão de Tarefas</button>
+        <button class="nav-btn" onclick="switchTab('tab-entregas',this)">📋 Entregas & Produtos</button>
+        <button class="nav-btn" onclick="switchTab('tab-carreira',this)">🏆 Plano de Carreira</button>
+    </div>
+    <div class="right-controls">
+        <span id="saveIndicator" class="save-indicator"></span>
+        <button class="backup-btn" id="backupBtn" onclick="exportBackup()">Backup 💾</button>
+        <label class="restore-label">Restaurar 📂<input type="file" style="display:none;" onchange="importBackup(event)" accept=".json"></label>
+        <button class="reset-btn" onclick="factoryReset()">🧹 Zerar</button>
+        <div class="user-badge" style="color: #000;">Planejador</div>
+    </div>
+</nav>
+
+<div id="tab-dashboard" class="tab-content active">
+    <div class="dash-metrics">
+        <div class="metric-box"><h3>Seu Nível Atual</h3><div class="val" id="dash_cargo_atual">FA I</div><div class="metric-sub" id="dash_rumo_a">Rumo a: FA II</div></div>
+        <div class="metric-box"><h3>Progresso Geral</h3><div class="val" id="dash_progresso" style="color:var(--yellow);">0%</div><div class="metric-sub" id="dash_bottleneck">Meta mais distante</div></div>
+        <div class="metric-box"><h3>PPs Totais (Próprios)</h3><div class="val" id="dash_pps_totais">0.0000</div><div class="metric-sub">APs + FUP + Manuais</div></div>
+        <div class="metric-box"><h3>Clientes Próprios</h3><div class="val" id="dash_tot_proprios">0</div><div class="metric-sub">Carteira Total: <span id="dash_tot_clientes">0</span></div></div>
+        <div class="metric-box"><h3>Ticket Médio (Próprios)</h3><div class="val" id="dash_ticket_medio">R$ 0,00</div><div class="metric-sub">Baseado nos clientes c/ AP</div></div>
+    </div>
+    <div class="container-flex">
+        <div class="col-left" style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card highlight" style="margin:0;padding:20px;"><h2>⚠️ Consultorias Pendentes</h2><div class="dash-missing-list" style="height:180px;"><ul id="dash_missing_list"></ul></div></div>
+            <div class="card" style="margin:0;padding:20px;border-color:var(--green);box-shadow:0 0 25px rgba(5,150,105,.1);"><h2 style="border-bottom-color:var(--green);">🎉 Aniversários (15 dias)</h2><div class="dash-missing-list" style="height:140px;background:transparent;border:none;padding:0;"><ul id="dash_birthdays_list"></ul></div></div>
+        </div>
+        <div class="card col-main">
+            <h2>Penetração de Produtos</h2>
+            <div style="text-align:center;">
+                <button class="toggle-chart-btn active" id="btn_dash_proprio" onclick="toggleDashChart(true)">Ver Apenas Próprios</button>
+                <button class="toggle-chart-btn" id="btn_dash_geral" onclick="toggleDashChart(false)">Ver Carteira Total</button>
+            </div>
+            <div class="dash-chart-container" style="height:350px;padding-top:20px;">
+                <div class="off-bar-wrap"><div class="off-bar-title"><span>Seguro de Vida</span><span id="off_lbl_vida">0%</span></div><div class="off-bar-bg"><div id="off_bar_vida" class="off-bar-fill" style="background:#059669;width:0%;"></div><div id="off_bar_vida_pot" class="off-bar-potencial" style="background:#059669;width:0%;"></div></div></div>
+                <div class="off-bar-wrap"><div class="off-bar-title"><span>Previdência Privada</span><span id="off_lbl_prev">0%</span></div><div class="off-bar-bg"><div id="off_bar_prev" class="off-bar-fill" style="background:#2563eb;width:0%;"></div><div id="off_bar_prev_pot" class="off-bar-potencial" style="background:#2563eb;width:0%;"></div></div></div>
+                <div class="off-bar-wrap"><div class="off-bar-title"><span>Consórcios (Imóvel/Auto)</span><span id="off_lbl_cons">0%</span></div><div class="off-bar-bg"><div id="off_bar_cons" class="off-bar-fill" style="background:#d97706;width:0%;"></div><div id="off_bar_cons_pot" class="off-bar-potencial" style="background:#d97706;width:0%;"></div></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-capa" class="tab-content">
+    <div class="container-flex">
+        <div class="card col-left">
+            <h2>Novo Cliente</h2>
+            <div class="input-group" style="margin-bottom:15px;"><label>Nome Completo</label><input type="text" id="newClientName" placeholder="Nome do cliente..." onkeydown="if(event.key==='Enter') createNewClient()"></div>
+            <div class="input-group" style="margin-bottom:20px;"><label>Origem da Carteira</label><select id="newClientType"><option value="proprio">Próprio</option><option value="estrutura">Estrutura</option></select></div>
+            <button class="btn-primary" style="width:100%;" onclick="createNewClient()">Cadastrar no Sistema</button>
+        </div>
+        <div class="card col-main highlight">
+            <h2>Ficha de Conexão & Perfil Humano</h2>
+            <div style="position:relative;margin-bottom:20px;">
+                <input type="text" id="capaSearchSelect" placeholder="🔍 Buscar cliente..." oninput="filterCapaDropdown()" onfocus="filterCapaDropdown()" autocomplete="off" style="width:100%;padding:12px 15px;border-radius:10px;border:1px solid var(--border-hover);background:var(--bg-input);color:#fff;outline:none;font-size:16px;">
+                <ul id="capaDropdownList" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;max-height:250px;overflow-y:auto;z-index:1000;padding:0;margin:5px 0 0;list-style:none;box-shadow:0 10px 30px rgba(0,0,0,.9);"></ul>
+            </div>
+            <div id="capaFormArea" style="display:none;">
+                <div class="form-grid">
+                    <div class="input-group"><label>Apelido</label><input type="text" id="capa_apelido" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>WhatsApp / Contato</label><input type="text" id="capa_contato" placeholder="62999999999" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Data de Nascimento</label><input type="date" id="capa_nascimento" onchange="saveCapaData()"></div>
+                    <div class="input-group"><label>Profissão / Ocupação</label><input type="text" id="capa_ocupacao" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Estrutura Familiar</label><input type="text" id="capa_familia" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Maior Sonho</label><input type="text" id="capa_sonho" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Maior Medo / Dor</label><input type="text" id="capa_dor" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Hobbies & Interesses</label><input type="text" id="capa_hobbies" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Padrão de Vida Estimado</label><input type="text" id="capa_padrao" oninput="saveCapaData()"></div>
+                    <div class="input-group"><label>Origem da Carteira</label><select id="capa_origem_carteira" onchange="saveCapaData()"><option value="proprio">Próprio</option><option value="estrutura">Estrutura</option></select></div>
+                </div>
+                <div class="input-group" style="margin-top:15px;"><label>📝 Anotações & Observações</label><textarea id="capa_anotacoes" rows="4" oninput="saveCapaData()" placeholder="Reuniões, follow-ups, contexto..."></textarea></div>
+                <button class="btn-delete-large" onclick="deleteCapaClient()">🗑️ Excluir Cliente Definitivamente</button>
+            </div>
+            <p id="capaEmptyMsg" class="empty-msg" style="margin-top:50px;">Selecione ou busque um cliente acima.</p>
+        </div>
+    </div>
+</div>
+
+<div id="tab-tarefas" class="tab-content">
+    <div class="container-flex" style="align-items:stretch;">
+        <div class="card" style="flex:0 0 280px;min-width:0;">
+            <h2>Clientes</h2>
+            <div class="search-add-group"><input type="text" id="searchInput" placeholder="🔍 Buscar..." oninput="renderTasksTab()"></div>
+            <div class="scroll-area-clients" style="height:520px;"><ul id="taskClientList" class="list"></ul></div>
+        </div>
+        <div class="card highlight" style="flex:1.3;min-width:0;">
+            <h2 id="taskTitle">Tarefas</h2>
+            <div class="pf-bar" id="taskPfBar" style="display:none;">
+                <button class="pf-btn active" id="pf_all" onclick="setTaskFilter('all')">Todas</button>
+                <button class="pf-btn" id="pf_alta" onclick="setTaskFilter('alta')">🔴 Alta</button>
+                <button class="pf-btn" id="pf_media" onclick="setTaskFilter('media')">🟡 Média</button>
+                <button class="pf-btn" id="pf_normal" onclick="setTaskFilter('normal')">⚪ Normal</button>
+            </div>
+            <div class="task-add-bar" id="taskFormGroup" style="display:none;">
+                <select id="taskPriority"><option value="normal">⚪ Normal</option><option value="media">🟡 Média</option><option value="alta">🔴 Alta</option></select>
+                <input type="text" id="taskInput" placeholder="Nova atividade..." onkeydown="if(event.key==='Enter') addTask()">
+                <button onclick="addTask()">+ Add</button>
+            </div>
+            <h3 class="section-subtitle">⚡ Pendentes</h3>
+            <div class="task-scroll"><ul id="pendingTaskList" class="list"></ul></div>
+            <h3 class="section-subtitle">✓ Concluídas</h3>
+            <div class="task-scroll-sm"><ul id="completedTaskList" class="list"></ul></div>
+        </div>
+        <div class="card" style="flex:1;min-width:0;">
+            <h2>📋 Visão Geral</h2>
+            <div class="pf-bar">
+                <button class="pf-btn active" id="gpf_all" onclick="setGenFilter('all')">Todas</button>
+                <button class="pf-btn" id="gpf_alta" onclick="setGenFilter('alta')">🔴 Alta</button>
+                <button class="pf-btn" id="gpf_media" onclick="setGenFilter('media')">🟡 Média</button>
+                <button class="pf-btn" id="gpf_normal" onclick="setGenFilter('normal')">⚪ Normal</button>
+            </div>
+            <div class="gen-scroll" id="genTasksContainer"></div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-entregas" class="tab-content">
+    <div class="container-flex">
+        <div class="card col-left">
+            <h2>Selecione o Cliente</h2>
+            <div class="search-add-group">
+                <input type="text" id="searchEntregasInput" placeholder="🔍 Filtrar..." oninput="renderEntregasList()">
+                <select id="filterEntregasType" onchange="renderEntregasList()" style="padding:10px; border-radius:25px; border:1px solid var(--border-hover); background:var(--bg-input); color:#fff; outline:none; font-family:inherit; cursor:pointer; font-size:12px;">
+                    <option value="todos">Todos</option>
+                    <option value="proprio">Próprio</option>
+                    <option value="estrutura">Estrutura</option>
+                </select>
+            </div>
+            <div class="scroll-area-clients" style="height:520px;"><ul id="entregasClientList" class="list"></ul></div>
+        </div>
+        <div class="card col-main highlight">
+            <h2 id="entregasHeaderTitle">Painel de Soluções</h2>
+            <div id="entregasArea" style="display:none;">
+                <div class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:25px;">
+                    <div class="input-group"><label>Valor Consultoria (AP)</label><input type="number" id="ent_apValue" placeholder="R$" step="0.01" oninput="saveEntregasData()"></div>
+                    <div class="input-group"><label>Contrato FUP</label><select id="ent_fup" onchange="saveEntregasData()"><option value="">Sem FUP</option><option value="Standard">Standard (149,90)</option><option value="Premium">Premium (199,90)</option><option value="Infinity">Infinity (349,90)</option><option value="Private">Private (649,90)</option></select></div>
+                    <div class="input-group"><label>Captação</label><select id="ent_captacao" onchange="saveEntregasData()"><option value="proprio">Próprio</option><option value="lead">Lead</option></select></div>
+                    <div class="input-group"><label>Status Operação</label><select id="ent_status" onchange="saveEntregasData()"><option value="Em andamento">Em andamento</option><option value="Concluído">Concluído</option><option value="Inativo">Inativo</option></select></div>
+                </div>
+                <h3 class="section-subtitle">Timeline das Reuniões</h3>
+                <div class="timeline-grid" style="margin-bottom:25px;">
+                    <div class="timeline-card"><h4>C1 - Orçamento & Balanço</h4><select id="ent_c1Status" onchange="saveEntregasData()"><option value="">A fazer</option><option value="Feito BP">Feito BP</option><option value="Feito Líder">Feito Líder</option><option value="Feito CaaS">Feito CaaS</option></select></div>
+                    <div class="timeline-card"><h4>C2 - Blindagem</h4><select id="ent_c2Status" onchange="saveEntregasData()"><option value="">A fazer</option><option value="Feito BP">Feito BP</option><option value="Feito Líder">Feito Líder</option><option value="Feito CaaS">Feito CaaS</option></select></div>
+                    <div class="timeline-card"><h4>C3 - Previdência & Inv.</h4><select id="ent_c3Status" onchange="saveEntregasData()"><option value="">A fazer</option><option value="Feito BP">Feito BP</option><option value="Feito Líder">Feito Líder</option><option value="Feito CaaS">Feito CaaS</option></select></div>
+                    <div class="timeline-card"><h4>C4 - Aquisição de Bens</h4><select id="ent_c4Status" onchange="saveEntregasData()"><option value="">A fazer</option><option value="Feito BP">Feito BP</option><option value="Feito Líder">Feito Líder</option><option value="Feito CaaS">Feito CaaS</option></select></div>
+                </div>
+                <h3 class="section-subtitle">Matriz de Alocação de Produtos</h3>
+                <div class="products-grid" id="productsGridArea"></div>
+            </div>
+            <p id="entregasEmptyMsg" class="empty-msg" style="margin-top:100px;">Selecione um cliente para abrir a esteira financeira.</p>
+        </div>
+    </div>
+</div>
+
+<div id="tab-carreira" class="tab-content">
+    <div class="career-header">
+        <div>
+            <h2 style="border:none;padding:0;margin:0;font-size:22px;color:var(--yellow);">Métricas de Desenvolvimento Comercial</h2>
+            <p style="margin:5px 0 0;font-size:13px;color:var(--text-muted);">PPs calculados sobre clientes Próprios (APs + FUPs anualizados) + Manuais.</p>
+        </div>
+        <div class="input-group">
+            <label>Seu Nível Atual</label>
+            <select id="userCurrentCargo" onchange="saveCargoUser()" style="background:var(--bg-dark);border-color:var(--yellow);color:var(--yellow);font-weight:900;">
+                <option value="FA_I">Financial Advisor I</option><option value="FA_II">Financial Advisor II</option>
+                <option value="FA_III">Financial Advisor III</option><option value="FA_IV">Financial Advisor IV</option>
+                <option value="Partner">Partner (P)</option>
+            </select>
+        </div>
+    </div>
+    <div class="container-flex">
+        <div class="card col-main">
+            <h2>Avanço de Patamar Comercial</h2>
+            <div id="careerTargetTitle" style="font-weight:800;font-size:16px;margin-bottom:5px;color:#fff;"></div>
+            <div id="careerBottleneckMsg" style="font-size:12px;color:var(--amber);margin-bottom:20px; font-weight: 600;"></div>
+            <div class="progress-block"><div class="progress-labels"><span>Clientes Próprios (Ativos)</span><span id="lbl_prog_clients">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_clients" class="progress-bar-fill"></div></div></div>
+            <div class="progress-block"><div class="progress-labels"><span>Acompanhamentos FUP (Próprio)</span><span id="lbl_prog_fup">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_fup" class="progress-bar-fill"></div></div></div>
+            <div class="progress-block"><div class="progress-labels"><span>Produção Acumulada (PPs Totais)</span><span id="lbl_prog_pps">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_pps" class="progress-bar-fill"></div></div></div>
+        </div>
+        <div class="card highlight col-left">
+            <h2>Lançamento Manual (PPs)</h2>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:15px;font-weight: 500;">PPs gerados por produtos ou outras BUs.</p>
+            <div class="input-group" style="margin-bottom:15px;"><label>PPs de Produtos Gerados</label><input type="number" id="manual_pps_produtos" placeholder="Ex: 150.5" step="0.01" oninput="saveManualPPs()" style="font-size:18px;font-weight:800;color:var(--yellow);"></div>
+            <div class="input-group"><label>PPs de Outras BUs</label><input type="number" id="manual_pps_bus" placeholder="Ex: 50.2" step="0.01" oninput="saveManualPPs()" style="font-size:18px;font-weight:800;"></div>
+
+            <div style="margin-top:25px;padding-top:20px;border-top:1px solid var(--border);">
+                <h3 class="section-subtitle">🧮 Calculadora de PPs</h3>
+                <div class="input-group" style="margin-bottom:10px;"><label>Valor AP (R$)</label><input type="number" id="calc_ap" placeholder="Ex: 3000" step="0.01" oninput="calcPPs()"></div>
+                <div class="input-group" style="margin-bottom:10px;"><label>FUP do Cliente</label>
+                    <select id="calc_fup" onchange="calcPPs()">
+                        <option value="">Sem FUP</option>
+                        <option value="Standard">Standard (149,90)</option>
+                        <option value="Premium">Premium (199,90)</option>
+                        <option value="Infinity">Infinity (349,90)</option>
+                        <option value="Private">Private (649,90)</option>
+                    </select>
+                </div>
+                <div style="background:var(--bg-dark);border:1px solid var(--yellow);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">PPs gerados por este cliente</div>
+                    <div id="calc_result" style="font-size:24px;font-weight:900;color:var(--yellow);">0.0000</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;font-weight:500;" id="calc_breakdown">AP: 0 + FUP anual: 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// ⚙️ FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+    apiKey:            "AIzaSyA03xOX_OiWRvjA74gpIxf2A3hj8Urml4k",
+    authDomain:        "crm-azanki.firebaseapp.com",
+    databaseURL:       "https://crm-azanki-default-rtdb.firebaseio.com",
+    projectId:         "crm-azanki",
+    storageBucket:     "crm-azanki.firebasestorage.app",
+    messagingSenderId: "333716344967",
+    appId:             "1:333716344967:web:08c1e13fdcf76cace0e822"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// === CONSTANTES ===
+const productSpecs=[
+    {id:'p_seguro',name:'Seguro de Vida'},{id:'p_prev',name:'Previdência Privada'},
+    {id:'p_imovel',name:'Consórcio Imobiliário'},{id:'p_auto',name:'Consórcio Automóvel'},
+    {id:'p_saude',name:'Plano de Saúde'},{id:'p_rc',name:'Responsabilidade Civil'},
+    {id:'p_resid',name:'Seguro Residencial'},{id:'p_segauto',name:'Seguro Automóvel'},
+    {id:'p_patrim',name:'W1 Patrimonial'},{id:'p_business',name:'W1 Business'}
+];
+const careerReqs={
+    FA_I:{target:"FA II",clients:4,fup:0,pps:100},
+    FA_II:{target:"FA III",clients:16,fup:12,pps:720},
+    FA_III:{target:"FA IV",clients:32,fup:24,pps:1600},
+    FA_IV:{target:"Partner",clients:32,fup:80,pps:1600},
+    Partner:{target:"Senior Partner",clients:32,fup:80,pps:2000}
+};
+const FUP_VALUES={'Standard':149.90,'Premium':199.90,'Infinity':349.90,'Private':649.90};
+const CAPA_FIELDS=['apelido','contato','nascimento','ocupacao','familia','sonho','dor','hobbies','padrao','anotacoes'];
+
+// === ESTADO ===
+let clients=[],manualPPs={produtos:0,bus:0};
+let selectedCapaIndex=null,selectedTaskClient=null,selectedEntregasClient=null,draggedIndex=null;
+let isDashProprioOnly=true,saveIndicatorTimer=null,dashProductFilter='ambos';
+let taskPriorityFilter='all',genTaskFilter='all';
+
+// === PP CALCULATION ===
+function calcClientPPs(d) {
+    let pps = 0;
+    const apVal = parseFloat(d.apValue);
+    if(!isNaN(apVal) && apVal > 0) pps += apVal / 200;
+    if(d.fup && d.fup in FUP_VALUES) {
+        pps += (FUP_VALUES[d.fup] * 12) / 200;
+    }
+    return pps;
+}
+
+function calcPPs() {
+    const apVal = parseFloat(document.getElementById('calc_ap').value) || 0;
+    const fup = document.getElementById('calc_fup').value;
+    const apPPs = apVal / 200;
+    const fupPPs = (fup && fup in FUP_VALUES) ? (FUP_VALUES[fup] * 12) / 200 : 0;
+    const total = apPPs + fupPPs;
+    document.getElementById('calc_result').innerText = total.toFixed(4);
+    document.getElementById('calc_breakdown').innerText = `AP: ${apPPs.toFixed(4)} + FUP anual: ${fupPPs.toFixed(4)}`;
+}
+
+// === HELPERS ===
+function toArray(v){
+    if(!v)return[];if(Array.isArray(v))return v;
+    return Object.keys(v).sort((a,b)=>parseInt(a)-parseInt(b)).map(k=>v[k]);
+}
+function getShortName(n){return n.includes("Gihad")?"Pessoal":n.split(' ').slice(0,2).join(' ');}
+function getPriority(t){return t.priority||'normal';}
+function showSaveIndicator(){
+    const el=document.getElementById('saveIndicator');
+    if(el){el.innerText='✓ Salvo';clearTimeout(saveIndicatorTimer);saveIndicatorTimer=setTimeout(()=>{el.innerText='';},3000);}
+}
+
+// === MODAL ===
+function showModal(title,msg,onConfirm){
+    document.getElementById('modalTitle').innerText=title;
+    document.getElementById('modalMessage').innerHTML=msg;
+    document.getElementById('modalConfirmBtn').onclick=()=>{closeModal();onConfirm();};
+    document.getElementById('confirmModal').classList.add('active');
+}
+function closeModal(){document.getElementById('confirmModal').classList.remove('active');}
+document.getElementById('confirmModal').addEventListener('click',e=>{if(e.target.id==='confirmModal')closeModal();});
+
+// === FIREBASE SAVE ===
+function saveData(){
+    db.ref('crm/clients').set(clients).catch(e=>console.error(e));
+    showSaveIndicator();
+}
+function saveCargoUser(){
+    db.ref('crm/settings/cargo').set(document.getElementById('userCurrentCargo').value);
+    updateCareerDashboard();
+}
+function saveManualPPs(){
+    try{
+        manualPPs.produtos=parseFloat(document.getElementById('manual_pps_produtos').value)||0;
+        manualPPs.bus=parseFloat(document.getElementById('manual_pps_bus').value)||0;
+        db.ref('crm/manualPPs').set(manualPPs).catch(e=>console.error(e));
+        updateCareerDashboard();
+    }catch(e){console.error(e);}
+}
+
+// === INIT ASYNC ===
+async function initializeData(){
+    try{
+        const snap=await db.ref('crm').get();
+        if(snap.exists()){
+            const data=snap.val();
+            clients=toArray(data.clients);
+            manualPPs=data.manualPPs||{produtos:0,bus:0};
+            document.getElementById('userCurrentCargo').value=data.settings?.cargo||'FA_I';
+            const lb=data.settings?.lastBackup;
+            if(lb){const days=Math.floor((Date.now()-lb)/(1000*60*60*24));if(days>=7){const b=document.getElementById('backupBtn');b.classList.add('overdue');b.title=`⚠️ Último backup há ${days} dias!`;b.innerText='Backup ⚠️';}}
+        }else{
+            clients=[{name:"Gihad Azanki (Pessoal)",tasks:[],info:{},deliveries:{origemCarteira:'proprio',status:'Em andamento'},products:{}}];
+            await db.ref('crm/clients').set(clients);
+        }
+        clients.forEach(c=>{
+            if(!c.info)c.info={};if(!c.deliveries)c.deliveries={origemCarteira:'proprio',status:'Em andamento'};
+            if(!c.products)c.products={};if(!c.deliveries.status)c.deliveries.status='Em andamento';
+            if(c.deliveries.isHerdado!==undefined){c.deliveries.origemCarteira=c.deliveries.isHerdado?'estrutura':'proprio';delete c.deliveries.isHerdado;}
+            Object.keys(c.products).forEach(k=>{if(typeof c.products[k]==='string')c.products[k]={status:c.products[k],value:''};});
+            if(!c.tasks)c.tasks=[];else if(!Array.isArray(c.tasks))c.tasks=toArray(c.tasks);
+        });
+        document.getElementById('manual_pps_produtos').value=manualPPs.produtos||'';
+        document.getElementById('manual_pps_bus').value=manualPPs.bus||'';
+    }catch(e){
+        console.error(e);
+        document.getElementById('loadingScreen').innerHTML='<div style="color:#dc2626;font-size:16px;text-align:center;padding:40px;">❌ Erro ao conectar ao Firebase.<br><br><small style="color:#a0aec0;">Verifique o firebaseConfig.</small></div>';
+        throw e;
+    }
+}
+
+function refreshAllViews(){
+    renderTasksTab();renderGeneralTasks();updateCareerDashboard();updateDashboards();
+    if(document.getElementById('tab-entregas').classList.contains('active'))renderEntregasList();
+}
+function factoryReset(){
+    showModal('🧹 Zerar Sistema','Isso apagará <strong style="color:var(--red)">TODOS os dados</strong>. Irreversível.',
+        async()=>{await db.ref('crm').remove();alert('Zerado!');location.reload();});
+}
+
+// === NAVEGAÇÃO ===
+function setMobileNav(tabId){
+    document.querySelectorAll('.mn-btn').forEach(b=>b.classList.remove('active'));
+    const b=document.getElementById(`mn-${tabId}`);if(b)b.classList.add('active');
+}
+function switchTab(id,btn){
+    document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(btn)btn.classList.add('active');
+    setMobileNav(id);
+    if(id==='tab-capa'){document.getElementById('capaSearchSelect').value='';filterCapaDropdown();}
+    refreshAllViews();
+}
+function exportBackup(){
+    const a=document.createElement('a');
+    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({clients,manualPPs}));
+    a.download=`Backup_W1_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    db.ref('crm/settings/lastBackup').set(Date.now());
+    const b=document.getElementById('backupBtn');b.classList.remove('overdue');b.title='';b.innerText='Backup 💾';
+}
+function importBackup(e){
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=async function(ev){
+        try{
+            const data=JSON.parse(ev.target.result);
+            if(data.clients){clients=data.clients;manualPPs=data.manualPPs||{produtos:0,bus:0};}
+            else if(Array.isArray(data))clients=data;
+            await db.ref('crm/clients').set(clients);
+            await db.ref('crm/manualPPs').set(manualPPs);
+            alert('Dados restaurados!');location.reload();
+        }catch(err){alert('Erro na leitura do backup.');}
+    };
+    r.readAsText(file);
+}
+
+// === DASHBOARD ===
+function toggleDashFilter(f){
+    dashProductFilter=f;
+    document.getElementById('btn_dash_filter_ambos').className=f==='ambos'?'toggle-chart-btn active':'toggle-chart-btn';
+    document.getElementById('btn_dash_filter_pagantes').className=f==='pagantes'?'toggle-chart-btn active':'toggle-chart-btn';
+    document.getElementById('btn_dash_filter_potenciais').className=f==='potenciais'?'toggle-chart-btn active':'toggle-chart-btn';
+    updateDashboards();
+}
+function toggleDashChart(p){
+    isDashProprioOnly=p;
+    document.getElementById('btn_dash_proprio').className=p?'toggle-chart-btn active':'toggle-chart-btn';
+    document.getElementById('btn_dash_geral').className=p?'toggle-chart-btn':'toggle-chart-btn active';
+    updateDashboards();
+}
+function updateDashboards(){
+    let totC=0,totP=0,cSeg=0,cPrev=0,cCons=0,cSegPot=0,cPrevPot=0,cConsPot=0,pendHtml='',bdHtml='';
+    let ticketTotal=0,ticketCount=0;
+    const today=new Date();today.setHours(0,0,0,0);
+    clients.forEach((c,i)=>{
+        if(i===0)return;const d=c.deliveries||{},p=c.products||{};
+        totC++;if(d.origemCarteira==='proprio')totP++;
+        
+        if(d.origemCarteira==='proprio'){
+            const apVal=parseFloat(d.apValue);
+            if(!isNaN(apVal) && apVal>0){ ticketTotal+=apVal; ticketCount++; }
+        }
+
+        if(!isDashProprioOnly||d.origemCarteira==='proprio'){
+            if(p.p_seguro?.status==='Contratado')cSeg++;
+            else if(p.p_seguro?.status==='Potencial')cSegPot++;
+
+            if(p.p_prev?.status==='Contratado')cPrev++;
+            else if(p.p_prev?.status==='Potencial')cPrevPot++;
+
+            if(p.p_imovel?.status==='Contratado'||p.p_auto?.status==='Contratado')cCons++;
+            else if(p.p_imovel?.status==='Potencial'||p.p_auto?.status==='Potencial')cConsPot++;
+        }
+        if(d.status!=='Inativo'){
+            const ok=['Feito BP','Feito Líder','Feito CaaS'],miss=[];
+            if(!ok.includes(d.c1Status))miss.push('C1');if(!ok.includes(d.c2Status))miss.push('C2');
+            if(!ok.includes(d.c3Status))miss.push('C3');if(!ok.includes(d.c4Status))miss.push('C4');
+            if(miss.length)pendHtml+=`<li><span>${c.name}</span><span class="tags">Falta: ${miss.join(', ')}</span></li>`;
+        }
+        if(c.info?.nascimento){
+            const pts=c.info.nascimento.split('-');
+            if(pts.length===3){
+                const bm=parseInt(pts[1])-1,bd=parseInt(pts[2]);
+                let bY=new Date(today.getFullYear(),bm,bd);
+                if(bY<today&&(today-bY)>86400000)bY.setFullYear(today.getFullYear()+1);
+                const diff=Math.ceil((bY-today)/(1000*60*60*24));
+                if(diff>=0&&diff<=15){
+                    const txt=diff===0?'<span style="color:var(--green);font-weight:bold;">Hoje! 🎂</span>':`em ${diff} dia(s)`;
+                    const fone=c.info.contato?c.info.contato.replace(/\D/g,''):'';
+                    let wpp='';if(fone){const ap=c.info.apelido||c.name.split(' ')[0],msg=diff===0?`Parabéns ${ap}! Feliz aniversário! 🎉`:`Olá ${ap}, tudo bem?`;wpp=`<a href="https://wa.me/55${fone}?text=${encodeURIComponent(msg)}" target="_blank" style="text-decoration:none;font-size:16px;margin-left:8px;">💬</a>`;}
+                    bdHtml+=`<li><span style="display:flex;align-items:center;">${c.name} ${wpp}</span><span style="color:var(--text-muted);font-size:11px;">${txt}</span></li>`;
+                }
+            }
+        }
+    });
+    
+    document.getElementById('dash_tot_clientes').innerText=totC;
+    document.getElementById('dash_tot_proprios').innerText=totP;
+    document.getElementById('dash_ticket_medio').innerText='R$ ' + (ticketCount>0?(ticketTotal/ticketCount).toFixed(2):'0.00').replace('.',',');
+    document.getElementById('dash_missing_list').innerHTML=pendHtml||'<li><span style="color:var(--green);">Tudo em dia!</span></li>';
+    document.getElementById('dash_birthdays_list').innerHTML=bdHtml||'<li><span style="color:var(--text-muted);font-style:italic;">Nenhum aniversário nos próximos 15 dias.</span></li>';
+    
+    let base=isDashProprioOnly?totP:totC;if(!base)base=1;
+    
+    let ps=0, pp=0, pc=0;
+    let psPot=0, ppPot=0, pcPot=0;
+
+    if(dashProductFilter==='ambos' || dashProductFilter==='pagantes'){
+        ps = Math.round(cSeg/base*100);
+        pp = Math.round(cPrev/base*100);
+        pc = Math.round(cCons/base*100);
+    }
+    if(dashProductFilter==='ambos' || dashProductFilter==='potenciais'){
+        psPot = Math.round(cSegPot/base*100);
+        ppPot = Math.round(cPrevPot/base*100);
+        pcPot = Math.round(cConsPot/base*100);
+    }
+
+    const t_vida = ps + psPot;
+    const t_prev = pp + ppPot;
+    const t_cons = pc + pcPot;
+
+    document.getElementById('off_lbl_vida').innerText=`${t_vida}%`;
+    document.getElementById('off_bar_vida').style.width=`${ps}%`;
+    document.getElementById('off_bar_vida_pot').style.width=`${psPot}%`;
+
+    document.getElementById('off_lbl_prev').innerText=`${t_prev}%`;
+    document.getElementById('off_bar_prev').style.width=`${pp}%`;
+    document.getElementById('off_bar_prev_pot').style.width=`${ppPot}%`;
+
+    document.getElementById('off_lbl_cons').innerText=`${t_cons}%`;
+    document.getElementById('off_bar_cons').style.width=`${pc}%`;
+    document.getElementById('off_bar_cons_pot').style.width=`${pcPot}%`;
+}
+
+// === BASE DE CLIENTES ===
+function createNewClient(){
+    const name=document.getElementById('newClientName').value.trim(),type=document.getElementById('newClientType').value;
+    if(!name)return;
+    clients.push({name,tasks:[],info:{},deliveries:{origemCarteira:type,status:'Em andamento'},products:{}});
+    document.getElementById('newClientName').value='';
+    saveData();refreshAllViews();alert('Perfil criado!');filterCapaDropdown();
+}
+function filterCapaDropdown(){
+    const inp=document.getElementById('capaSearchSelect'),lst=document.getElementById('capaDropdownList'),s=inp.value.toLowerCase();
+    lst.innerHTML='';let has=false;
+    clients.forEach((c,i)=>{
+        if(i===0||(s&&!c.name.toLowerCase().includes(s)))return;
+        has=true;const li=document.createElement('li');li.style.cssText='padding:12px 15px;cursor:pointer;border-bottom:1px solid var(--border);';
+        li.innerHTML=`${c.name} <span style="color:var(--text-muted);font-size:11px;">${c.deliveries.origemCarteira==='estrutura'?'(Estrutura)':''}</span>`;
+        li.onclick=()=>{inp.value=c.name;lst.style.display='none';selectedCapaIndex=i;loadCapaData();};
+        lst.appendChild(li);
+    });
+    if(!has)lst.innerHTML='<li style="padding:12px 15px;color:var(--text-muted);text-align:center;">Nenhum cliente encontrado</li>';
+    lst.style.display='block';
+}
+document.addEventListener('click',e=>{const inp=document.getElementById('capaSearchSelect'),lst=document.getElementById('capaDropdownList');if(e.target!==inp&&e.target!==lst)lst.style.display='none';});
+function loadCapaData(){
+    const form=document.getElementById('capaFormArea'),msg=document.getElementById('capaEmptyMsg');
+    if(selectedCapaIndex===null){form.style.display='none';msg.style.display='block';return;}
+    form.style.display='block';msg.style.display='none';
+    const info=clients[selectedCapaIndex].info,del=clients[selectedCapaIndex].deliveries;
+    CAPA_FIELDS.forEach(id=>{document.getElementById(`capa_${id}`).value=info[id]||'';});
+    document.getElementById('capa_origem_carteira').value=del.origemCarteira||'proprio';
+}
+function saveCapaData(){
+    if(selectedCapaIndex===null)return;
+    const info={};CAPA_FIELDS.forEach(id=>{info[id]=document.getElementById(`capa_${id}`).value;});
+    clients[selectedCapaIndex].info=info;clients[selectedCapaIndex].deliveries.origemCarteira=document.getElementById('capa_origem_carteira').value;
+    saveData();refreshAllViews();
+}
+function deleteCapaClient(){
+    if(selectedCapaIndex===null)return;
+    const name=clients[selectedCapaIndex].name;
+    showModal('🗑️ Excluir Cliente',`Excluir <span class="modal-client-name">"${name}"</span> e todos os dados?`,()=>{
+        clients.splice(selectedCapaIndex,1);
+        if(selectedTaskClient===selectedCapaIndex)selectedTaskClient=null;else if(selectedTaskClient>selectedCapaIndex)selectedTaskClient--;
+        if(selectedEntregasClient===selectedCapaIndex)selectedEntregasClient=null;else if(selectedEntregasClient>selectedCapaIndex)selectedEntregasClient--;
+        selectedCapaIndex=null;saveData();
+        document.getElementById('capaSearchSelect').value='';document.getElementById('capaFormArea').style.display='none';document.getElementById('capaEmptyMsg').style.display='block';
+        filterCapaDropdown();refreshAllViews();
+    });
+}
+
+// === TAREFAS ===
+function setTaskFilter(f){
+    taskPriorityFilter=f;
+    ['all','alta','media','normal'].forEach(p=>{const b=document.getElementById(`pf_${p}`);if(!b)return;b.className=p===f?`pf-btn active${f==='alta'?' act-alta':f==='media'?' act-media':''}`:'pf-btn';});
+    renderTasksTab();
+}
+function setGenFilter(f){
+    genTaskFilter=f;
+    ['all','alta','media','normal'].forEach(p=>{const b=document.getElementById(`gpf_${p}`);if(!b)return;b.className=p===f?`pf-btn active${f==='alta'?' act-alta':f==='media'?' act-media':''}`:'pf-btn';});
+    renderGeneralTasks();
+}
+function makeTaskItem(t,tIdx,showDel=true,onToggle=''){
+    const pri=getPriority(t);
+    const li=document.createElement('li');li.className=`task-item p-${pri}${t.done?' done-item':''}`;
+    const delBtn=showDel?`<button class="btn-delete task-del" onclick="delTask(${tIdx},event)">✕</button>`:'';
+    li.innerHTML=`<div class="priority-pip"></div><input type="checkbox" class="task-checkbox" ${t.done?'checked':''} onchange="${onToggle}"><span class="task-label${t.done?' struck':''}">${t.text}</span>${delBtn}`;
+    return li;
+}
+function adjustIndex(idx,from,to){
+    if(idx===null)return null;if(idx===from)return to;
+    if(from<to){if(idx>from&&idx<=to)return idx-1;}else{if(idx>=to&&idx<from)return idx+1;}
+    return idx;
+}
+function handleDragStart(i,e){if(i===0){e.preventDefault();return;}draggedIndex=i;}
+function handleDrop(i){
+    if(draggedIndex===null||i===0||draggedIndex===i)return;
+    const from=draggedIndex,item=clients[from];clients.splice(from,1);clients.splice(i,0,item);
+    selectedTaskClient=adjustIndex(selectedTaskClient,from,i);
+    selectedCapaIndex=adjustIndex(selectedCapaIndex,from,i);
+    selectedEntregasClient=adjustIndex(selectedEntregasClient,from,i);
+    draggedIndex=null;saveData();refreshAllViews();
+}
+function deleteClient(i,e){
+    e.stopPropagation();if(i===0)return;
+    showModal('🗑️ Apagar',`Excluir <span class="modal-client-name">"${clients[i].name}"</span>?`,()=>{
+        clients.splice(i,1);selectedTaskClient=null;selectedEntregasClient=null;
+        if(selectedCapaIndex===i){selectedCapaIndex=null;document.getElementById('capaSearchSelect').value='';}
+        saveData();refreshAllViews();filterCapaDropdown();
+    });
+}
+function addTask(){
+    const inp=document.getElementById('taskInput');const pri=document.getElementById('taskPriority').value;
+    if(!inp.value.trim()||selectedTaskClient===null)return;
+    clients[selectedTaskClient].tasks.unshift({text:inp.value.trim(),done:false,priority:pri});
+    inp.value='';saveData();renderTasksTab();renderGeneralTasks();
+}
+function toggleTask(tIdx,isGen=false,cIdx=null){
+    const idx=isGen?cIdx:selectedTaskClient;
+    clients[idx].tasks[tIdx].done=!clients[idx].tasks[tIdx].done;
+    saveData();renderTasksTab();renderGeneralTasks();
+}
+function delTask(tIdx,e){e.stopPropagation();clients[selectedTaskClient].tasks.splice(tIdx,1);saveData();renderTasksTab();renderGeneralTasks();}
+function renderTasksTab(){
+    const lst=document.getElementById('taskClientList'),s=document.getElementById('searchInput').value.toLowerCase();
+    lst.innerHTML='';lst.className=selectedTaskClient!==null?'list has-selection':'list';
+    clients.forEach((c,i)=>{
+        if(s&&!c.name.toLowerCase().includes(s))return;
+        const li=document.createElement('li');li.className=`list-item ${selectedTaskClient===i?'selected':''}`;
+        li.onclick=()=>{selectedTaskClient=(selectedTaskClient===i)?null:i;renderTasksTab();};
+        if(i!==0){li.draggable=true;li.ondragstart=e=>handleDragStart(i,e);li.ondragover=e=>e.preventDefault();li.ondrop=()=>handleDrop(i);}
+        const badge=i===0?'':(c.deliveries.origemCarteira==='estrutura'?'<span class="client-type-tag tag-estrutura">E</span>':'<span class="client-type-tag tag-proprio">P</span>');
+        const pending=c.tasks.filter(t=>!t.done).length;
+        const cb=pending>0?`<span class="task-count-badge">${pending}</span>`:'';
+        li.innerHTML=`<span>${i===0?'👤 ':''}${c.name}${badge}${cb}</span>${i!==0?`<button class="btn-delete" onclick="deleteClient(${i},event)">✕</button>`:''}`;
+        lst.appendChild(li);
+    });
+    const pL=document.getElementById('pendingTaskList'),cL=document.getElementById('completedTaskList');
+    const form=document.getElementById('taskFormGroup'),pfBar=document.getElementById('taskPfBar');
+    pL.innerHTML='';cL.innerHTML='';
+    if(selectedTaskClient===null){form.style.display='none';pfBar.style.display='none';document.getElementById('taskTitle').innerText='Tarefas';return;}
+    form.style.display='flex';pfBar.style.display='flex';
+    document.getElementById('taskTitle').innerText=getShortName(clients[selectedTaskClient].name);
+    clients[selectedTaskClient].tasks.forEach((t,i)=>{
+        const pri=getPriority(t);
+        if(!t.done&&taskPriorityFilter!=='all'&&pri!==taskPriorityFilter)return;
+        const li=makeTaskItem(t,i,true,`toggleTask(${i})`);
+        t.done?cL.appendChild(li):pL.appendChild(li);
+    });
+    if(!pL.children.length)pL.innerHTML='<p class="empty-msg">Nenhuma tarefa pendente.</p>';
+    if(!cL.children.length)cL.innerHTML='<p class="empty-msg" style="font-size:12px;">Nenhuma concluída.</p>';
+}
+function renderGeneralTasks(){
+    const container=document.getElementById('genTasksContainer');container.innerHTML='';let hasAny=false;
+    clients.forEach((c,cIdx)=>{
+        const pending=c.tasks.filter(t=>{
+            if(t.done)return false;
+            return genTaskFilter==='all'||getPriority(t)===genTaskFilter;
+        });
+        if(!pending.length)return;hasAny=true;
+        const group=document.createElement('div');group.className='cgroup';
+        const hdr=document.createElement('div');hdr.className='cgroup-header';
+        hdr.innerHTML=`<span class="cgroup-name">${c.name.includes("Gihad")?'👤 Pessoal':c.name.split(' ')[0]}</span><span class="cgroup-count">${pending.length} pendente${pending.length>1?'s':''}</span>`;
+        group.appendChild(hdr);
+        const ul=document.createElement('ul');ul.className='list';
+        c.tasks.forEach((t,tIdx)=>{
+            if(t.done)return;if(genTaskFilter!=='all'&&getPriority(t)!==genTaskFilter)return;
+            ul.appendChild(makeTaskItem(t,tIdx,false,`toggleTask(${tIdx},true,${cIdx})`));
+        });
+        group.appendChild(ul);container.appendChild(group);
+    });
+    if(!hasAny)container.innerHTML='<p class="empty-msg">Nenhuma tarefa pendente.</p>';
+}
+
+// === ENTREGAS ===
+function buildProductsGrid(){
+    const area=document.getElementById('productsGridArea');area.innerHTML='';
+    productSpecs.forEach(p=>{area.innerHTML+=`<div class="product-card" id="card_${p.id}"><div class="product-card-header"><span>${p.name}</span></div><div class="product-inputs"><select id="status_${p.id}" onchange="updateProductUI('${p.id}');saveEntregasData();"><option value="Em aberto">Em aberto</option><option value="Contratado">Contratado</option><option value="Potencial">Potencial</option><option value="Não contratado">Não contratado</option></select><input type="number" id="val_${p.id}" placeholder="Valor R$" oninput="saveEntregasData()"></div></div>`;});
+}
+function updateProductUI(id){
+    const s=document.getElementById(`status_${id}`),c=document.getElementById(`card_${id}`);
+    c.className='product-card';
+    if(s.value==='Contratado')c.classList.add('status-contratado');
+    else if(s.value==='Potencial')c.classList.add('status-potencial');
+    else if(s.value==='Não contratado')c.classList.add('status-nao-contratado');
+    else c.classList.add('status-em-aberto');
+}
+function renderEntregasList(){
+    const lst=document.getElementById('entregasClientList'),s=document.getElementById('searchEntregasInput').value.toLowerCase();
+    const typeFilter = document.getElementById('filterEntregasType') ? document.getElementById('filterEntregasType').value : 'todos';
+    lst.innerHTML='';lst.className=selectedEntregasClient!==null?'list has-selection':'list';
+    clients.forEach((c,i)=>{
+        if(i===0||(s&&!c.name.toLowerCase().includes(s)))return;
+        if(typeFilter !== 'todos' && c.deliveries?.origemCarteira !== typeFilter) return;
+        const li=document.createElement('li');li.className=`list-item ${selectedEntregasClient===i?'selected':''}`;
+        li.onclick=()=>{selectedEntregasClient=i;renderEntregasList();loadEntregasData();};
+        const badge = c.deliveries?.origemCarteira === 'estrutura' ? '<span class="client-type-tag tag-estrutura" style="margin-left:auto;">E</span>' : '<span class="client-type-tag tag-proprio" style="margin-left:auto;">P</span>';
+        li.innerHTML=`<span style="display:flex; width:100%; align-items:center;">${c.name}${badge}</span>`;lst.appendChild(li);
+    });
+}
+function loadEntregasData(){
+    const area=document.getElementById('entregasArea'),msg=document.getElementById('entregasEmptyMsg');
+    if(selectedEntregasClient===null){area.style.display='none';msg.style.display='block';return;}
+    area.style.display='block';msg.style.display='none';
+    document.getElementById('entregasHeaderTitle').innerText=`Esteira: ${clients[selectedEntregasClient].name}`;
+    const d=clients[selectedEntregasClient].deliveries;
+    ['apValue','fup','captacao','status','c1Status','c2Status','c3Status','c4Status'].forEach(id=>{
+        const el=document.getElementById(`ent_${id}`);
+        if(el)el.value=d[id]||(el.tagName==='SELECT'&&el.id==='ent_status'?'Em andamento':'');
+    });
+    const p=clients[selectedEntregasClient].products||{};
+    productSpecs.forEach(prod=>{
+        document.getElementById(`status_${prod.id}`).value=p[prod.id]?.status||'Em aberto';
+        document.getElementById(`val_${prod.id}`).value=p[prod.id]?.value||'';
+        updateProductUI(prod.id);
+    });
+}
+function saveEntregasData(){
+    if(selectedEntregasClient===null)return;
+    const d=clients[selectedEntregasClient].deliveries;
+    ['apValue','fup','captacao','status','c1Status','c2Status','c3Status','c4Status'].forEach(id=>{d[id]=document.getElementById(`ent_${id}`).value;});
+    productSpecs.forEach(prod=>{clients[selectedEntregasClient].products[prod.id]={status:document.getElementById(`status_${prod.id}`).value,value:document.getElementById(`val_${prod.id}`).value};});
+    saveData();updateCareerDashboard();updateDashboards();
+}
+
+// === CARREIRA ===
+function updateCareerDashboard(){
+    const sel=document.getElementById('userCurrentCargo'),rule=careerReqs[sel.value],nome=sel.options[sel.selectedIndex].text;
+    document.getElementById('careerTargetTitle').innerText=`Próximo Patamar: ${rule.target}`;
+
+    let cc=0,cf=0,pps=manualPPs.produtos+manualPPs.bus;
+    clients.forEach((c,i)=>{
+        if(i===0)return;
+        const d=c.deliveries||{};
+        if(d.origemCarteira==='proprio'){
+            if(d.status==='Concluído'||d.status==='Em andamento') cc++;
+            if(d.fup && d.fup in FUP_VALUES){ cf++; pps+=(FUP_VALUES[d.fup]*12)/200; }
+            const apVal=parseFloat(d.apValue);
+            if(!isNaN(apVal)&&apVal>0) pps+=apVal/200;
+        }
+    });
+
+    const pC = rule.clients > 0 ? Math.min((cc/rule.clients)*100, 100) : 100;
+    const pF = rule.fup    > 0 ? Math.min((cf/rule.fup)*100,    100) : 100;
+    const pP = rule.pps    > 0 ? Math.min((pps/rule.pps)*100,   100) : 100;
+    const prog = Math.min(pC, pF, pP);
+
+    const labels={clients:'Clientes Próprios',fup:'FUP Próprio',pps:'PPs de Produção'};
+    const vals={clients:pC,fup:pF,pps:pP};
+    const bottleneck=Object.entries(vals).sort((a,b)=>a[1]-b[1])[0];
+    const bmsg=document.getElementById('careerBottleneckMsg');
+    if(prog<100) bmsg.innerText=`⚠️ Gargalo atual: ${labels[bottleneck[0]]} (${bottleneck[1].toFixed(1)}%)`;
+    else bmsg.innerText='✅ Todos os critérios atingidos! Elegível para promoção.';
+
+    updateProgressBar('clients',cc,rule.clients);
+    updateProgressBar('fup',cf,rule.fup);
+    const ppsStr=parseFloat(pps.toFixed(4)).toString();
+    document.getElementById('lbl_prog_pps').innerText=`${ppsStr} / ${rule.pps}`;
+    document.getElementById('bar_prog_pps').style.width=`${pP}%`;
+
+    document.getElementById('dash_cargo_atual').innerText=nome;
+    document.getElementById('dash_rumo_a').innerText=`Rumo a: ${rule.target}`;
+    document.getElementById('dash_pps_totais').innerText=ppsStr;
+    document.getElementById('dash_progresso').innerText=`${prog.toFixed(1)}%`;
+    document.getElementById('dash_bottleneck').innerText=prog<100?`Gargalo: ${labels[bottleneck[0]]}`:'Todos os critérios ✅';
+}
+function updateProgressBar(id,cur,req){
+    if(req===0){document.getElementById(`lbl_prog_${id}`).innerText=`${cur} (Livre)`;document.getElementById(`bar_prog_${id}`).style.width='100%';return;}
+    document.getElementById(`lbl_prog_${id}`).innerText=`${cur} / ${req}`;
+    document.getElementById(`bar_prog_${id}`).style.width=`${Math.min((cur/req)*100,100)}%`;
+}
+
+// === BOOT ===
+async function boot(){
+    await initializeData();
+    document.getElementById('loadingScreen').style.display='none';
+    buildProductsGrid();
+    switchTab('tab-dashboard',document.querySelector('.nav-btn'));
+}
+boot();
+</script>
+</body>
+</html>
