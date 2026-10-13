@@ -232,7 +232,57 @@
         .modal-cancel { background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-hover); padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:700; font-family: inherit; }
         .modal-confirm-btn { background:var(--red); color:#fff; border:none; padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:700; font-family: inherit; }
 
+        /* ===== V2: FUNIL, RECEBIMENTOS ===== */
+        .form-grid > .input-group, .form-grid input, .form-grid select { min-width:0; width:100%; }
+        .tag { font-size:10px; padding:3px 7px; border-radius:4px; font-weight:800; white-space:nowrap; }
+        .tag-rec { background:#1e3a8a; color:#fff; } .tag-mx { background:#4c1d95; color:#fff; } .tag-lead { background:#78350f; color:#fff; }
+        .tag-cli { background:var(--green); color:#fff; } .tag-ana { background:var(--border-hover); color:#fff; }
+        .lead-row { background:var(--bg-input); border:1px solid var(--border); border-radius:12px; padding:10px 14px; margin-bottom:8px; display:grid; grid-template-columns: 1fr auto auto auto; gap:10px; align-items:center; cursor:pointer; transition:.2s; }
+        .lead-row:hover, .lead-row.selected { border-color:var(--yellow); }
+        .lead-row select { padding:6px 8px; border-radius:8px; background:var(--bg-dark); color:#fff; border:1px solid var(--border); font-family:inherit; font-size:12px; }
+        .lead-name { font-weight:700; font-size:14px; }
+        .lead-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+        .wpp-link { text-decoration:none; font-size:16px; }
+        .data-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .data-table th { text-align:right; color:var(--text-muted); font-size:11px; text-transform:uppercase; font-weight:700; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+        .data-table td { text-align:right; padding:9px 10px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .data-table th:first-child, .data-table td:first-child { text-align:left; }
+        .data-table tr.current td { background:rgba(255,213,0,.06); }
+        .data-table tr.total td { font-weight:800; border-top:2px solid var(--border-hover); }
+        .hit { color:var(--green); font-weight:800; } .miss { color:var(--red); font-weight:700; }
+        .table-scroll { overflow-x:auto; }
+        .rv-chart { display:flex; align-items:flex-end; gap:8px; height:240px; padding:10px 0 0; position:relative; border-bottom:1px solid var(--border); }
+        .rv-col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; position:relative; min-width:0; }
+        .rv-stack { width:70%; max-width:46px; display:flex; flex-direction:column-reverse; border-radius:4px 4px 0 0; overflow:hidden; }
+        .rv-seg { width:100%; }
+        .rv-val { font-size:10px; color:var(--text-main); font-weight:700; margin-bottom:4px; white-space:nowrap; }
+        .rv-lbl { font-size:10px; color:var(--text-muted); margin-top:6px; text-transform:uppercase; font-weight:700; text-align:center; }
+        .rv-col.current .rv-lbl { color:var(--yellow); }
+        .rv-col.past .rv-stack { opacity:.55; }
+        .rv-meta { position:absolute; left:0; right:0; border-top:2px dashed var(--yellow); pointer-events:none; }
+        .rv-meta span { position:absolute; right:0; top:-18px; font-size:10px; color:var(--yellow); font-weight:800; }
+        .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-muted); margin-top:12px; font-weight:600; }
+        .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+        .c-ap { background:var(--yellow); } .c-fup { background:var(--green); } .c-ext { background:var(--blue); }
+        .note { font-size:11px; color:var(--text-muted); line-height:1.5; margin-top:10px; }
+        .sim-out { background:var(--bg-dark); border:1px solid var(--yellow); border-radius:10px; padding:14px; margin-top:12px; font-size:13px; line-height:1.7; }
+        .sim-out b { color:var(--yellow); }
+        .chip-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+        .mini-list { list-style:none; padding:0; margin:0; }
+        .mini-list li { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+        .btn-ghost { background:transparent; color:var(--yellow); border:1px solid var(--yellow); padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:700; font-family:inherit; font-size:12px; }
+        .btn-ghost:hover { background:var(--yellow); color:var(--bg-dark); }
+        .row-actions { display:flex; gap:8px; margin-top:15px; flex-wrap:wrap; }
+
         @media (max-width: 768px) {
+            .lead-row { grid-template-columns: 1fr auto; }
+            .lead-row .hide-sm { display:none; }
+            .rv-val { display:none; }
+            .rv-lbl .yr { display:none; }
+            .rv-chart { gap:3px; }
+            .rv-stack { width:85%; }
+            .mobile-nav-inner { overflow-x:auto; }
+            .mn-btn { min-width:60px; }
             .mobile-nav { display: block; }
             .nav-buttons { display: none; }
             .top-nav { padding: 15px; gap: 8px; flex-wrap: wrap; justify-content: center; text-align: center; }
@@ -295,6 +345,8 @@
 <div class="mobile-nav" id="mobileNav">
     <div class="mobile-nav-inner">
         <button class="mn-btn active" id="mn-tab-dashboard" onclick="switchTab('tab-dashboard',null)"><span class="mn-icon">📊</span>Dash</button>
+        <button class="mn-btn" id="mn-tab-funil" onclick="switchTab('tab-funil',null)"><span class="mn-icon">🎯</span>Funil</button>
+        <button class="mn-btn" id="mn-tab-receb" onclick="switchTab('tab-receb',null)"><span class="mn-icon">💰</span>Receb.</button>
         <button class="mn-btn" id="mn-tab-capa" onclick="switchTab('tab-capa',null)"><span class="mn-icon">👤</span>Clientes</button>
         <button class="mn-btn" id="mn-tab-tarefas" onclick="switchTab('tab-tarefas',null)"><span class="mn-icon">⚡</span>Tarefas</button>
         <button class="mn-btn" id="mn-tab-entregas" onclick="switchTab('tab-entregas',null)"><span class="mn-icon">📋</span>Entregas</button>
@@ -308,6 +360,8 @@
     </div>
     <div class="nav-buttons">
         <button class="nav-btn active" onclick="switchTab('tab-dashboard',this)">📊 Dashboard</button>
+        <button class="nav-btn" onclick="switchTab('tab-funil',this)">🎯 Funil & RECs</button>
+        <button class="nav-btn" onclick="switchTab('tab-receb',this)">💰 Recebimentos</button>
         <button class="nav-btn" onclick="switchTab('tab-capa',this)">👤 Base de Clientes</button>
         <button class="nav-btn" onclick="switchTab('tab-tarefas',this)">⚡ Gestão de Tarefas</button>
         <button class="nav-btn" onclick="switchTab('tab-entregas',this)">📋 Entregas & Produtos</button>
@@ -334,10 +388,17 @@
         <div class="metric-box"><h3>Clientes Próprios</h3><div class="val" id="dash_tot_proprios">0</div><div class="metric-sub">Carteira Total: <span id="dash_tot_clientes">0</span></div></div>
         <div class="metric-box"><h3>Ticket Médio (Próprios)</h3><div class="val" id="dash_ticket_medio">R$ 0,00</div><div class="metric-sub">Baseado nos clientes c/ AP</div></div>
     </div>
+    <div class="dash-metrics">
+        <div class="metric-box" style="border-color:var(--yellow);"><h3>Previsto este mês</h3><div class="val" id="dash_rv_mes">R$ 0</div><div class="metric-sub" id="dash_rv_meta">Meta: R$ 0</div></div>
+        <div class="metric-box"><h3>Próximo mês</h3><div class="val" id="dash_rv_prox">R$ 0</div><div class="metric-sub">Já garantido hoje</div></div>
+        <div class="metric-box"><h3>Recorrente FUP</h3><div class="val" id="dash_rv_fup">R$ 0</div><div class="metric-sub" id="dash_rv_fup_n">0 FUPs ativos</div></div>
+        <div class="metric-box"><h3>Semana: AA / AF / AP</h3><div class="val" id="dash_wk_funil">0 / 0 / 0</div><div class="metric-sub">Meta: 8 / 5 / 1</div></div>
+        <div class="metric-box"><h3>RECs da semana</h3><div class="val" id="dash_wk_recs">0</div><div class="metric-sub" id="dash_wk_recs_sub">Meta: 7 por AF</div></div>
+    </div>
     <div class="container-flex">
         <div class="col-left" style="display:flex;flex-direction:column;gap:20px;">
             <div class="card highlight" style="margin:0;padding:20px;"><h2>⚠️ Consultorias Pendentes</h2><div class="dash-missing-list" style="height:180px;"><ul id="dash_missing_list"></ul></div></div>
-            <div class="card" style="margin:0;padding:20px;border-color:var(--green);box-shadow:0 0 25px rgba(5,150,105,.1);"><h2 style="border-bottom-color:var(--green);">🎉 Aniversários (15 dias)</h2><div class="dash-missing-list" style="height:140px;background:transparent;border:none;padding:0;"><ul id="dash_birthdays_list"></ul></div></div>
+            <div class="card" style="margin:0;padding:20px;border-color:var(--green);box-shadow:0 0 25px rgba(5,150,105,.1);"><h2 style="border-bottom-color:var(--green);">🎉 Aniversários (30 dias)</h2><div class="dash-missing-list" style="height:200px;background:transparent;border:none;padding:0;"><ul id="dash_birthdays_list"></ul></div></div>
         </div>
         <div class="card col-main">
             <h2>Penetração de Produtos</h2>
@@ -349,6 +410,100 @@
                 <div class="off-bar-wrap"><div class="off-bar-title"><span>Seguro de Vida</span><span id="off_lbl_vida">0%</span></div><div class="off-bar-bg"><div id="off_bar_vida" class="off-bar-fill" style="background:#059669;width:0%;"></div><div id="off_bar_vida_pot" class="off-bar-potencial" style="background:#059669;width:0%;"></div></div></div>
                 <div class="off-bar-wrap"><div class="off-bar-title"><span>Previdência Privada</span><span id="off_lbl_prev">0%</span></div><div class="off-bar-bg"><div id="off_bar_prev" class="off-bar-fill" style="background:#2563eb;width:0%;"></div><div id="off_bar_prev_pot" class="off-bar-potencial" style="background:#2563eb;width:0%;"></div></div></div>
                 <div class="off-bar-wrap"><div class="off-bar-title"><span>Consórcios (Imóvel/Auto)</span><span id="off_lbl_cons">0%</span></div><div class="off-bar-bg"><div id="off_bar_cons" class="off-bar-fill" style="background:#d97706;width:0%;"></div><div id="off_bar_cons_pot" class="off-bar-potencial" style="background:#d97706;width:0%;"></div></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== FUNIL & RECs ===================== -->
+<div id="tab-funil" class="tab-content">
+    <div class="container-flex">
+        <div class="card col-left highlight">
+            <h2 id="leadFormTitle">Novo Contato</h2>
+            <div class="input-group" style="margin-bottom:12px;"><label>Nome</label><input type="text" id="lead_nome" placeholder="Nome do contato"></div>
+            <div class="form-grid" style="margin-bottom:12px;">
+                <div class="input-group"><label>WhatsApp</label><input type="text" id="lead_tel" placeholder="62999999999"></div>
+                <div class="input-group"><label>Nascimento</label><input type="date" id="lead_nasc"></div>
+            </div>
+            <div class="form-grid" style="margin-bottom:12px;">
+                <div class="input-group"><label>Origem</label><select id="lead_origem" onchange="toggleRecDe()"><option value="rec">REC (indicação)</option><option value="mercadox">Mercado X</option><option value="lead">Lead W1</option></select></div>
+                <div class="input-group"><label>Etapa</label><select id="lead_etapa"></select></div>
+            </div>
+            <div class="input-group" id="lead_recde_wrap" style="margin-bottom:12px;"><label>Indicado por</label><input type="text" id="lead_recde" list="clientNamesList" placeholder="Nome de quem indicou"></div>
+            <datalist id="clientNamesList"></datalist>
+            <div class="form-grid" style="margin-bottom:12px;">
+                <div class="input-group"><label>Data AA</label><input type="date" id="lead_dataAA"></div>
+                <div class="input-group"><label>Data AF</label><input type="date" id="lead_dataAF"></div>
+                <div class="input-group"><label>Data AP</label><input type="date" id="lead_dataAP"></div>
+            </div>
+            <div class="input-group"><label>Observações</label><textarea id="lead_obs" rows="3" placeholder="Contexto da indicação, melhor horário..."></textarea></div>
+            <div class="row-actions">
+                <button class="btn-primary" style="flex:1;" onclick="saveLead()">Salvar</button>
+                <button class="btn-ghost" id="leadClearBtn" onclick="clearLeadForm()">Limpar</button>
+            </div>
+            <div class="row-actions" id="leadEditActions" style="display:none;">
+                <button class="btn-ghost" id="leadToClientBtn" onclick="convertLeadToClient()" style="flex:1;">➜ Criar cliente (AP)</button>
+                <button class="btn-delete" style="padding:8px 14px;" onclick="deleteLead()">Excluir</button>
+            </div>
+            <p class="note">As datas de AA, AF e AP são preenchidas automaticamente com a data de hoje quando você muda a etapa. Pode ajustá-las à mão.</p>
+        </div>
+        <div class="card col-main">
+            <h2>Funil da Semana</h2>
+            <div class="table-scroll"><table class="data-table" id="funilWeekTable"></table></div>
+            <p class="note" id="funilConvNote"></p>
+            <h3 class="section-subtitle" style="margin-top:22px;">Contatos</h3>
+            <div class="search-add-group"><input type="text" id="leadSearch" placeholder="🔍 Buscar contato..." oninput="renderLeadList()"></div>
+            <div class="chip-bar" id="leadEtapaChips"></div>
+            <div id="leadList" style="max-height:520px;overflow-y:auto;padding-right:4px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== RECEBIMENTOS ===================== -->
+<div id="tab-receb" class="tab-content">
+    <div class="dash-metrics">
+        <div class="metric-box" style="border-color:var(--yellow);"><h3>Este mês</h3><div class="val" id="rv_k_mes">R$ 0</div><div class="metric-sub" id="rv_k_mes_sub">0% da meta</div></div>
+        <div class="metric-box"><h3>Próximo mês</h3><div class="val" id="rv_k_prox">R$ 0</div><div class="metric-sub">Já contratado</div></div>
+        <div class="metric-box"><h3>Média 3 próximos</h3><div class="val" id="rv_k_media">R$ 0</div><div class="metric-sub">Sem novas vendas</div></div>
+        <div class="metric-box"><h3>FUP recorrente</h3><div class="val" id="rv_k_fup">R$ 0</div><div class="metric-sub">por mês</div></div>
+        <div class="metric-box"><h3>Meta de renda</h3><div class="val"><input type="number" id="rv_meta" step="100" oninput="saveMeta()" style="width:120px;background:transparent;border:none;border-bottom:1px solid var(--yellow);color:var(--yellow);font-size:24px;font-weight:900;text-align:center;font-family:inherit;outline:none;"></div><div class="metric-sub">R$ por mês</div></div>
+    </div>
+    <div class="container-flex">
+        <div class="card col-main">
+            <h2>Projeção de Recebimentos</h2>
+            <div class="rv-chart" id="rvChart"></div>
+            <div class="legend"><span><i class="c-ap"></i>Consultorias (AP)</span><span><i class="c-fup"></i>Acompanhamentos (FUP)</span><span><i class="c-ext"></i>Produtos e outras</span><span style="color:var(--yellow);">--- Meta</span></div>
+            <p class="note">Meses à esquerda do atual aparecem apagados (estimativa do que já caiu). Cada mês mostra o que entra na sua conta, já considerando que a W1 paga no mês seguinte ao fechamento e repassa nas mesmas parcelas do cliente.</p>
+            <h3 class="section-subtitle" style="margin-top:20px;">Mês a mês</h3>
+            <div class="table-scroll"><table class="data-table" id="rvTable"></table></div>
+            <h3 class="section-subtitle" style="margin-top:22px;">Comissão de AP por mês de fechamento</h3>
+            <div class="table-scroll"><table class="data-table" id="rvApTable"></table></div>
+            <p class="note">Regra AP vigente desde 01/08/2026: % final = % base da faixa de faturamento do mês × fator FQ (0–1 AP 0,80 · 2 APs 0,90 · 3 APs 1,10 · 4+ APs 1,20), piso 20% e teto 55%. Só entram APs com valor e data de fechamento preenchidos em "Entregas & Produtos".</p>
+        </div>
+        <div class="col-left" style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card highlight" style="margin:0;">
+                <h2>🧮 Simulador de AP</h2>
+                <div class="form-grid">
+                    <div class="input-group"><label>APs no mês</label><input type="number" id="sim_n" value="2" min="1" oninput="runSimulator()"></div>
+                    <div class="input-group"><label>Ticket médio (R$)</label><input type="number" id="sim_t" value="4000" step="100" oninput="runSimulator()"></div>
+                </div>
+                <div class="input-group" style="margin-top:12px;"><label>Parcelamento típico</label><select id="sim_p" onchange="runSimulator()"><option value="1">À vista</option><option value="12" selected>12x</option></select></div>
+                <div class="sim-out" id="simOut"></div>
+            </div>
+            <div class="card" style="margin:0;">
+                <h2>Produtos e outras comissões</h2>
+                <div class="input-group" style="margin-bottom:10px;"><label>Descrição</label><input type="text" id="ext_desc" placeholder="Ex: Consórcio imóvel - Cliente X"></div>
+                <div class="form-grid" style="margin-bottom:10px;">
+                    <div class="input-group"><label>Comissão total (R$)</label><input type="number" id="ext_valor" step="0.01"></div>
+                    <div class="input-group"><label>Parcelas</label><input type="number" id="ext_parc" value="1" min="1"></div>
+                </div>
+                <div class="form-grid" style="margin-bottom:12px;">
+                    <div class="input-group"><label>1º recebimento</label><input type="date" id="ext_data"></div>
+                    <div class="input-group"><label>Tipo</label><select id="ext_tipo"><option>Produto</option><option>Indicação BU</option><option>Outro</option></select></div>
+                </div>
+                <button class="btn-primary" style="width:100%;" onclick="addExtra()">Adicionar</button>
+                <ul class="mini-list" id="extList" style="margin-top:12px;max-height:240px;overflow-y:auto;"></ul>
+                <p class="note">Lance aqui a comissão que você espera receber do produto (base da sua posição sobre o repasse da parceira) ou de indicações para outras BUs.</p>
             </div>
         </div>
     </div>
@@ -450,6 +605,12 @@
                     <div class="input-group"><label>Captação</label><select id="ent_captacao" onchange="saveEntregasData()"><option value="proprio">Próprio</option><option value="lead">Lead</option></select></div>
                     <div class="input-group"><label>Status Operação</label><select id="ent_status" onchange="saveEntregasData()"><option value="Em andamento">Em andamento</option><option value="Concluído">Concluído</option><option value="Inativo">Inativo</option></select></div>
                 </div>
+                <div class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:25px;">
+                    <div class="input-group"><label>Data fechamento AP</label><input type="date" id="ent_apDate" onchange="saveEntregasData()"></div>
+                    <div class="input-group"><label>Parcelas da AP</label><select id="ent_apParcelas" onchange="saveEntregasData()"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
+                    <div class="input-group"><label>Início do FUP</label><input type="date" id="ent_fupInicio" onchange="saveEntregasData()"></div>
+                    <div class="input-group"><label>FUP cancelado em</label><input type="date" id="ent_fupFim" onchange="saveEntregasData()"></div>
+                </div>
                 <h3 class="section-subtitle">Timeline das Reuniões</h3>
                 <div class="timeline-grid" style="margin-bottom:25px;">
                     <div class="timeline-card"><h4>C1 - Orçamento & Balanço</h4><select id="ent_c1Status" onchange="saveEntregasData()"><option value="">A fazer</option><option value="Feito BP">Feito BP</option><option value="Feito Líder">Feito Líder</option><option value="Feito CaaS">Feito CaaS</option></select></div>
@@ -488,6 +649,8 @@
             <div class="progress-block"><div class="progress-labels"><span>Clientes Próprios (Ativos)</span><span id="lbl_prog_clients">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_clients" class="progress-bar-fill"></div></div></div>
             <div class="progress-block"><div class="progress-labels"><span>Acompanhamentos FUP (Próprio)</span><span id="lbl_prog_fup">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_fup" class="progress-bar-fill"></div></div></div>
             <div class="progress-block"><div class="progress-labels"><span>Produção Acumulada (PPs Totais)</span><span id="lbl_prog_pps">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_pps" class="progress-bar-fill"></div></div></div>
+            <div class="progress-block"><div class="progress-labels"><span>PPs de Produtos (sem outras BUs)</span><span id="lbl_prog_prod">0/0</span></div><div class="progress-bar-container"><div id="bar_prog_prod" class="progress-bar-fill"></div></div></div>
+            <p class="note" id="careerNote">Critérios do Plano de Desenvolvimento Comercial 2026 (cumulativos, nomeação semanal). PPs de W1 Capital, Business, Patrimonial e Technology não contam como PPs de Produtos.</p>
         </div>
         <div class="card highlight col-left">
             <h2>Lançamento Manual (PPs)</h2>
@@ -544,18 +707,23 @@ const productSpecs=[
     {id:'p_resid',name:'Seguro Residencial'},{id:'p_segauto',name:'Seguro Automóvel'},
     {id:'p_patrim',name:'W1 Patrimonial'},{id:'p_business',name:'W1 Business'}
 ];
+// Plano de Desenvolvimento Comercial 2026 (critérios cumulativos)
+// FA IV → Partner: 32 APs (CPFs únicos) para ENTRAR na corrida; a corrida exige equipe (ver nota na tela).
 const careerReqs={
-    FA_I:{target:"FA II",clients:4,fup:0,pps:100},
-    FA_II:{target:"FA III",clients:16,fup:12,pps:720},
-    FA_III:{target:"FA IV",clients:32,fup:24,pps:1600},
-    FA_IV:{target:"Partner",clients:32,fup:80,pps:1600},
-    Partner:{target:"Senior Partner",clients:32,fup:80,pps:2000}
+    FA_I:{target:"FA II",clients:4,fup:3,pps:100,prod:30},
+    FA_II:{target:"FA III",clients:16,fup:12,pps:720,prod:200},
+    FA_III:{target:"FA IV",clients:32,fup:24,pps:1600,prod:400},
+    FA_IV:{target:"Partner (entrada na corrida)",clients:32,fup:80,pps:1600,prod:400,partner:true},
+    Partner:{target:"Senior Partner",clients:32,fup:240,pps:1600,prod:400,partner:true}
 };
+const ENT_FIELDS=['apValue','fup','captacao','status','c1Status','c2Status','c3Status','c4Status','apDate','apParcelas','fupInicio','fupFim'];
 const FUP_VALUES={'Standard':149.90,'Premium':199.90,'Infinity':349.90,'Private':649.90};
 const CAPA_FIELDS=['apelido','contato','nascimento','ocupacao','familia','sonho','dor','hobbies','padrao','anotacoes'];
 
 // === ESTADO ===
 let clients=[],manualPPs={produtos:0,bus:0};
+let leads=[],extras=[],metaRenda=6000;
+let selectedLeadId=null,leadEtapaFilter='ativos';
 let selectedCapaIndex=null,selectedTaskClient=null,selectedEntregasClient=null,draggedIndex=null;
 let isDashProprioOnly=true,saveIndicatorTimer=null,dashProductFilter='ambos';
 let taskPriorityFilter='all',genTaskFilter='all';
@@ -590,6 +758,7 @@ auth.onAuthStateChanged(async user => {
         await initializeData();
         document.getElementById('loadingScreen').style.display = 'none';
         buildProductsGrid();
+        buildFunilStatic();
         switchTab('tab-dashboard', document.querySelector('.nav-btn'));
     } else {
         currentUser = null;
@@ -637,6 +806,21 @@ function saveData(){
     db.ref(getUserDbPath('clients')).set(clients).catch(e=>console.error(e));
     showSaveIndicator();
 }
+function saveLeads(){
+    if (!currentUser) return;
+    db.ref(getUserDbPath('leads')).set(leads).catch(e=>console.error(e));
+    showSaveIndicator();
+}
+function saveExtras(){
+    if (!currentUser) return;
+    db.ref(getUserDbPath('extras')).set(extras).catch(e=>console.error(e));
+    showSaveIndicator();
+}
+function saveMeta(){
+    metaRenda=parseFloat(document.getElementById('rv_meta').value)||0;
+    if (currentUser) db.ref(getUserDbPath('settings/metaRenda')).set(metaRenda);
+    renderReceb();updateDashboards();
+}
 function saveCargoUser(){
     if (!currentUser) return;
     db.ref(getUserDbPath('settings/cargo')).set(document.getElementById('userCurrentCargo').value);
@@ -661,6 +845,9 @@ async function initializeData(){
             const data=snap.val();
             clients=toArray(data.clients);
             manualPPs=data.manualPPs||{produtos:0,bus:0};
+            leads=toArray(data.leads);
+            extras=toArray(data.extras);
+            if(data.settings?.metaRenda) metaRenda=data.settings.metaRenda;
             document.getElementById('userCurrentCargo').value=data.settings?.cargo||'FA_I';
             const lb=data.settings?.lastBackup;
             if(lb){const days=Math.floor((Date.now()-lb)/(1000*60*60*24));if(days>=7){const b=document.getElementById('backupBtn');b.classList.add('overdue');b.title=`⚠️ Último backup há ${days} dias!`;b.innerText='Backup ⚠️';}}
@@ -678,6 +865,8 @@ async function initializeData(){
         });
         document.getElementById('manual_pps_produtos').value=manualPPs.produtos||'';
         document.getElementById('manual_pps_bus').value=manualPPs.bus||'';
+        document.getElementById('rv_meta').value=metaRenda;
+        leads.forEach(l=>{ if(!l.id) l.id=uid(); });
     }catch(e){
         console.error(e);
         alert('Erro ao carregar dados do usuário.');
@@ -687,6 +876,8 @@ async function initializeData(){
 function refreshAllViews(){
     renderTasksTab();renderGeneralTasks();updateCareerDashboard();updateDashboards();
     if(document.getElementById('tab-entregas').classList.contains('active'))renderEntregasList();
+    if(document.getElementById('tab-funil').classList.contains('active'))renderFunil();
+    if(document.getElementById('tab-receb').classList.contains('active'))renderReceb();
 }
 function factoryReset(){
     showModal('🧹 Zerar Dados','Isso apagará <strong style="color:var(--red)">todos os seus clientes e dados</strong> deste login. Irreversível.',
@@ -709,7 +900,7 @@ function switchTab(id,btn){
 }
 function exportBackup(){
     const a=document.createElement('a');
-    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({clients,manualPPs}));
+    a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({clients,manualPPs,leads,extras,metaRenda}));
     a.download=`Backup_CRM_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     if(currentUser) db.ref(getUserDbPath('settings/lastBackup')).set(Date.now());
@@ -721,10 +912,13 @@ function importBackup(e){
     r.onload=async function(ev){
         try{
             const data=JSON.parse(ev.target.result);
-            if(data.clients){clients=data.clients;manualPPs=data.manualPPs||{produtos:0,bus:0};}
+            if(data.clients){clients=data.clients;manualPPs=data.manualPPs||{produtos:0,bus:0};leads=data.leads||leads;extras=data.extras||extras;if(data.metaRenda)metaRenda=data.metaRenda;}
             else if(Array.isArray(data))clients=data;
             await db.ref(getUserDbPath('clients')).set(clients);
             await db.ref(getUserDbPath('manualPPs')).set(manualPPs);
+            await db.ref(getUserDbPath('leads')).set(leads);
+            await db.ref(getUserDbPath('extras')).set(extras);
+            await db.ref(getUserDbPath('settings/metaRenda')).set(metaRenda);
             alert('Dados restaurados!');location.reload();
         }catch(err){alert('Erro ao carregar o arquivo.');}
     };
@@ -767,28 +961,33 @@ function updateDashboards(){
             if(!ok.includes(d.c3Status))miss.push('C3');if(!ok.includes(d.c4Status))miss.push('C4');
             if(miss.length)pendHtml+=`<li><span>${c.name}</span><span class="tags">Falta: ${miss.join(', ')}</span></li>`;
         }
-        if(c.info?.nascimento){
-            const pts=c.info.nascimento.split('-');
-            if(pts.length===3){
-                const bm=parseInt(pts[1])-1,bd=parseInt(pts[2]);
-                let bY=new Date(today.getFullYear(),bm,bd);
-                if(bY<today&&(today-bY)>86400000)bY.setFullYear(today.getFullYear()+1);
-                const diff=Math.ceil((bY-today)/(1000*60*60*24));
-                if(diff>=0&&diff<=15){
-                    const txt=diff===0?'<span style="color:var(--green);font-weight:bold;">Hoje! 🎂</span>':`em ${diff} dia(s)`;
-                    const fone=c.info.contato?c.info.contato.replace(/\D/g,''):'';
-                    let wpp='';if(fone){const ap=c.info.apelido||c.name.split(' ')[0],msg=diff===0?`Parabéns ${ap}! Feliz aniversário! 🎉`:`Olá ${ap}, tudo bem?`;wpp=`<a href="https://wa.me/55${fone}?text=${encodeURIComponent(msg)}" target="_blank" style="text-decoration:none;font-size:16px;margin-left:8px;">💬</a>`;}
-                    bdHtml+=`<li><span style="display:flex;align-items:center;">${c.name} ${wpp}</span><span style="color:var(--text-muted);font-size:11px;">${txt}</span></li>`;
-                }
-            }
-        }
     });
+    getBirthdays(30).forEach(b=>{
+        const txt=b.diff===0?'<span style="color:var(--green);font-weight:bold;">Hoje! 🎂</span>':`em ${b.diff} dia(s) · ${b.dataTxt}`;
+        let wpp='';
+        if(b.fone){const msg=b.diff===0?`Parabéns ${b.apelido}! Feliz aniversário! 🎉`:`Olá ${b.apelido}, tudo bem?`;wpp=`<a href="https://wa.me/55${b.fone}?text=${encodeURIComponent(msg)}" target="_blank" class="wpp-link" style="margin-left:8px;">💬</a>`;}
+        const tag=b.tipo==='cliente'?'<span class="tag tag-cli" style="margin-left:8px;">Cliente</span>':'<span class="tag tag-ana" style="margin-left:8px;">Análise</span>';
+        bdHtml+=`<li><span style="display:flex;align-items:center;">${esc(b.nome)}${tag}${wpp}</span><span style="color:var(--text-muted);font-size:11px;">${txt}</span></li>`;
+    });
+    // Recebimentos e funil no dashboard
+    const rv=computeRecebimentos();
+    const cur=rv.months.find(m=>m.key===monthKey(new Date()));
+    const nxt=rv.months.find(m=>m.key===addMonthsKey(monthKey(new Date()),1));
+    document.getElementById('dash_rv_mes').innerText=fmtBRL0(cur?cur.total:0);
+    document.getElementById('dash_rv_meta').innerText=metaRenda?`${Math.round((cur?cur.total:0)/metaRenda*100)}% da meta de ${fmtBRL0(metaRenda)}`:'Defina a meta em Recebimentos';
+    document.getElementById('dash_rv_prox').innerText=fmtBRL0(nxt?nxt.total:0);
+    document.getElementById('dash_rv_fup').innerText=fmtBRL0(rv.fupMensalAtual);
+    document.getElementById('dash_rv_fup_n').innerText=`${rv.fupAtivos} FUPs ativos`;
+    const wk=computeWeeks(1)[0];
+    document.getElementById('dash_wk_funil').innerHTML=`<span class="${wk.aa>=8?'hit':''}">${wk.aa}</span> / <span class="${wk.af>=5?'hit':''}">${wk.af}</span> / <span class="${wk.ap>=1?'hit':''}">${wk.ap}</span>`;
+    document.getElementById('dash_wk_recs').innerText=wk.recs;
+    document.getElementById('dash_wk_recs_sub').innerText=wk.af?`${(wk.recs/wk.af).toFixed(1)} por AF (meta 7)`:'Meta: 7 por AF';
     
     document.getElementById('dash_tot_clientes').innerText=totC;
     document.getElementById('dash_tot_proprios').innerText=totP;
     document.getElementById('dash_ticket_medio').innerText='R$ ' + (ticketCount>0?(ticketTotal/ticketCount).toFixed(2):'0.00').replace('.',',');
     document.getElementById('dash_missing_list').innerHTML=pendHtml||'<li><span style="color:var(--green);">Tudo em dia!</span></li>';
-    document.getElementById('dash_birthdays_list').innerHTML=bdHtml||'<li><span style="color:var(--text-muted);font-style:italic;">Nenhum aniversário nos próximos 15 dias.</span></li>';
+    document.getElementById('dash_birthdays_list').innerHTML=bdHtml||'<li><span style="color:var(--text-muted);font-style:italic;">Nenhum aniversário nos próximos 30 dias.</span></li>';
     
     let base=isDashProprioOnly?totP:totC;if(!base)base=1;
     let ps=0, pp=0, pc=0, psPot=0, ppPot=0, pcPot=0;
@@ -1001,9 +1200,11 @@ function loadEntregasData(){
     area.style.display='block';msg.style.display='none';
     document.getElementById('entregasHeaderTitle').innerText=`Esteira: ${clients[selectedEntregasClient].name}`;
     const d=clients[selectedEntregasClient].deliveries;
-    ['apValue','fup','captacao','status','c1Status','c2Status','c3Status','c4Status'].forEach(id=>{
+    ENT_FIELDS.forEach(id=>{
         const el=document.getElementById(`ent_${id}`);
-        if(el)el.value=d[id]||(el.tagName==='SELECT'&&el.id==='ent_status'?'Em andamento':'');
+        if(!el)return;
+        const dflt = id==='status'?'Em andamento' : id==='apParcelas'?'1' : id==='captacao'?'proprio' : '';
+        el.value=d[id]||dflt;
     });
     const p=clients[selectedEntregasClient].products||{};
     productSpecs.forEach(prod=>{
@@ -1015,9 +1216,10 @@ function loadEntregasData(){
 function saveEntregasData(){
     if(selectedEntregasClient===null)return;
     const d=clients[selectedEntregasClient].deliveries;
-    ['apValue','fup','captacao','status','c1Status','c2Status','c3Status','c4Status'].forEach(id=>{d[id]=document.getElementById(`ent_${id}`).value;});
+    ENT_FIELDS.forEach(id=>{const el=document.getElementById(`ent_${id}`);if(el)d[id]=el.value;});
     productSpecs.forEach(prod=>{clients[selectedEntregasClient].products[prod.id]={status:document.getElementById(`status_${prod.id}`).value,value:document.getElementById(`val_${prod.id}`).value};});
     saveData();updateCareerDashboard();updateDashboards();
+    if(document.getElementById('tab-receb').classList.contains('active'))renderReceb();
 }
 
 // === CARREIRA ===
@@ -1037,13 +1239,20 @@ function updateCareerDashboard(){
         }
     });
 
+    const prodPPs = manualPPs.produtos||0;
     const pC = rule.clients > 0 ? Math.min((cc/rule.clients)*100, 100) : 100;
     const pF = rule.fup    > 0 ? Math.min((cf/rule.fup)*100,    100) : 100;
     const pP = rule.pps    > 0 ? Math.min((pps/rule.pps)*100,   100) : 100;
-    const prog = Math.min(pC, pF, pP);
+    const pD = rule.prod   > 0 ? Math.min((prodPPs/rule.prod)*100, 100) : 100;
+    const prog = Math.min(pC, pF, pP, pD);
 
-    const labels={clients:'Clientes Próprios',fup:'FUP Próprio',pps:'PPs de Produção'};
-    const vals={clients:pC,fup:pF,pps:pP};
+    const labels={clients:'Clientes Próprios',fup:'FUP Próprio',pps:'PPs de Produção',prod:'PPs de Produtos'};
+    const vals={clients:pC,fup:pF,pps:pP,prod:pD};
+    document.getElementById('lbl_prog_prod').innerText=`${parseFloat(prodPPs.toFixed(2))} / ${rule.prod}`;
+    document.getElementById('bar_prog_prod').style.width=`${pD}%`;
+    document.getElementById('careerNote').innerText = rule.partner
+        ? 'Corrida de Partner: ser FA IV com 32+ APs de CPFs únicos e treinamentos concluídos; 3 meses com 500 PPs/mês, 80 acompanhamentos ativos no fim, estrutura mínima de 5 BPs com linhas de FA III/FA II, 70% core business. As barras acima mostram só a parte individual.'
+        : 'Critérios do Plano de Desenvolvimento Comercial 2026 (cumulativos, nomeação semanal). PPs de W1 Capital, Business, Patrimonial e Technology não contam como PPs de Produtos.';
     const bottleneck=Object.entries(vals).sort((a,b)=>a[1]-b[1])[0];
     const bmsg=document.getElementById('careerBottleneckMsg');
     if(prog<100) bmsg.innerText=`⚠️ Gargalo atual: ${labels[bottleneck[0]]} (${bottleneck[1].toFixed(1)}%)`;
@@ -1061,6 +1270,319 @@ function updateCareerDashboard(){
     document.getElementById('dash_progresso').innerText=`${prog.toFixed(1)}%`;
     document.getElementById('dash_bottleneck').innerText=prog<100?`Gargalo: ${labels[bottleneck[0]]}`:'Todos os critérios ✅';
 }
+// ============================================================
+// V2 — HELPERS
+// ============================================================
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtBRL(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function fmtBRL0(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0,minimumFractionDigits:0});}
+function parseDate(s){if(!s)return null;const p=s.split('-');if(p.length!==3)return null;return new Date(+p[0],+p[1]-1,+p[2]);}
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function addMonthsKey(k,n){const [y,m]=k.split('-').map(Number);const d=new Date(y,m-1+n,1);return monthKey(d);}
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function monthLabel(k){const [y,m]=k.split('-').map(Number);return `${MESES[m-1]}/${String(y).slice(2)}`;}
+function fmtDM(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;}
+
+// ============================================================
+// V2 — ANIVERSÁRIOS (clientes + pessoas que passaram por análise)
+// ============================================================
+function getBirthdays(days){
+    const today=new Date();today.setHours(0,0,0,0);
+    const seen=new Set(),out=[];
+    const push=(nome,nasc,tipo,contato,apelido)=>{
+        const key=(nome||'').trim().toLowerCase();if(!key||seen.has(key))return;
+        const d=parseDate(nasc);if(!d)return;
+        let bY=new Date(today.getFullYear(),d.getMonth(),d.getDate());
+        if(bY<today)bY.setFullYear(today.getFullYear()+1);
+        const diff=Math.round((bY-today)/86400000);
+        if(diff<0||diff>days)return;
+        seen.add(key);
+        out.push({nome,tipo,diff,dataTxt:fmtDM(bY),fone:(contato||'').replace(/\D/g,''),apelido:apelido||nome.split(' ')[0]});
+    };
+    clients.forEach((c,i)=>{if(i===0)return;push(c.name,c.info?.nascimento,'cliente',c.info?.contato,c.info?.apelido);});
+    leads.forEach(l=>{const ana=l.dataAF||['af','ap'].includes(l.etapa);push(l.nome,l.nasc,ana?'analise':'contato',l.tel);});
+    return out.sort((a,b)=>a.diff-b.diff);
+}
+
+// ============================================================
+// V2 — MOTOR DE COMISSÕES
+// ============================================================
+const AP_FAIXAS=[{min:0,base:.20},{min:5000,base:.35},{min:7500,base:.40},{min:15000,base:.45},{min:30000,base:.50},{min:50000,base:.525}];
+function fqFactor(n){return n<=1?0.80:n===2?0.90:n===3?1.10:1.20;}
+function apPct(total,n){
+    const cargo=document.getElementById('userCurrentCargo')?.value||'FA_II';
+    let base=AP_FAIXAS[0].base;AP_FAIXAS.forEach(f=>{if(total>=f.min)base=f.base;});
+    const fq=fqFactor(n);
+    let pct=Math.min(Math.max(base*fq,0.20),0.55);
+    if(cargo==='FA_IV'&&total>=10000)pct=Math.max(pct,0.40);
+    if(cargo==='Partner')pct=total<=10000?0.40:0.50;
+    return {base,fq,pct};
+}
+function fupPct(plano,captacao){
+    if(captacao==='lead')return plano==='Standard'?0.25:0.35;
+    return 0.50;
+}
+function computeRecebimentos(){
+    const nowKey=monthKey(new Date());
+    const first=addMonthsKey(nowKey,-5),last=addMonthsKey(nowKey,6);
+    const months=[];for(let k=first;k<=last;k=addMonthsKey(k,1))months.push({key:k,ap:0,fup:0,ext:0,total:0});
+    const at=k=>months.find(m=>m.key===k);
+    // AP: agrupa por mês de fechamento, aplica faixa x FQ, distribui nas parcelas a partir do mês seguinte
+    const groups={};
+    clients.forEach((c,i)=>{
+        if(i===0)return;const d=c.deliveries||{};
+        const v=parseFloat(d.apValue),dt=parseDate(d.apDate);
+        if(!(v>0)||!dt)return;
+        const k=monthKey(dt);(groups[k]=groups[k]||[]).push({nome:c.name,v,parc:parseInt(d.apParcelas)||1});
+    });
+    const apByMonth=Object.keys(groups).sort().reverse().map(k=>{
+        const list=groups[k];const total=list.reduce((s,a)=>s+a.v,0);
+        const n=new Set(list.map(a=>a.nome.trim().toLowerCase())).size;
+        const r=apPct(total,n);let comm=0;
+        list.forEach(a=>{const c=a.v*r.pct;comm+=c;for(let j=0;j<a.parc;j++){const m=at(addMonthsKey(k,1+j));if(m)m.ap+=c/a.parc;}});
+        return {key:k,n,total,...r,comm};
+    });
+    // FUP: comissão mensal enquanto ativo, paga no mês seguinte ao pagamento do cliente
+    let fupMensalAtual=0,fupAtivos=0;
+    clients.forEach((c,i)=>{
+        if(i===0)return;const d=c.deliveries||{};
+        if(!(d.fup in FUP_VALUES))return;
+        const val=FUP_VALUES[d.fup]*fupPct(d.fup,d.captacao);
+        const ini=parseDate(d.fupInicio),fim=parseDate(d.fupFim);
+        const startPay=ini?addMonthsKey(monthKey(ini),1):null;
+        const lastPay=fim?addMonthsKey(monthKey(fim),1):null;
+        months.forEach(m=>{if((!startPay||m.key>=startPay)&&(!lastPay||m.key<=lastPay))m.fup+=val;});
+        const hoje=new Date();
+        if((!ini||ini<=hoje)&&(!fim||fim>=hoje)){fupMensalAtual+=val;fupAtivos++;}
+    });
+    // Produtos e outras comissões lançadas à mão
+    extras.forEach(e=>{
+        const dt=parseDate(e.data);const v=parseFloat(e.valor);if(!dt||!(v>0))return;
+        const p=parseInt(e.parc)||1;const k=monthKey(dt);
+        for(let j=0;j<p;j++){const m=at(addMonthsKey(k,j));if(m)m.ext+=v/p;}
+    });
+    months.forEach(m=>m.total=m.ap+m.fup+m.ext);
+    return {months,apByMonth,fupMensalAtual,fupAtivos,nowKey};
+}
+
+// ============================================================
+// V2 — TELA RECEBIMENTOS
+// ============================================================
+function renderReceb(){
+    const rv=computeRecebimentos();
+    const cur=rv.months.find(m=>m.key===rv.nowKey);
+    const fut=rv.months.filter(m=>m.key>rv.nowKey);
+    document.getElementById('rv_k_mes').innerText=fmtBRL0(cur.total);
+    document.getElementById('rv_k_mes_sub').innerText=metaRenda?`${Math.round(cur.total/metaRenda*100)}% da meta`:'Defina a meta';
+    document.getElementById('rv_k_prox').innerText=fmtBRL0(fut[0]?.total||0);
+    document.getElementById('rv_k_media').innerText=fmtBRL0(fut.slice(0,3).reduce((s,m)=>s+m.total,0)/3);
+    document.getElementById('rv_k_fup').innerText=fmtBRL0(rv.fupMensalAtual);
+    if(document.activeElement?.id!=='rv_meta')document.getElementById('rv_meta').value=metaRenda;
+
+    // Gráfico
+    const H=190,max=Math.max(metaRenda,...rv.months.map(m=>m.total),1)*1.1;
+    let html='';
+    rv.months.forEach(m=>{
+        const cls=m.key===rv.nowKey?'current':(m.key<rv.nowKey?'past':'');
+        const h=m.total/max*H;
+        const seg=(v,c)=>v>0?`<div class="rv-seg ${c}" style="height:${m.total?v/m.total*100:0}%"></div>`:'';
+        html+=`<div class="rv-col ${cls}" title="${monthLabel(m.key)}: AP ${fmtBRL0(m.ap)} · FUP ${fmtBRL0(m.fup)} · Produtos ${fmtBRL0(m.ext)}"><div class="rv-val">${m.total?fmtBRL0(m.total).replace('R$','').trim():''}</div><div class="rv-stack" style="height:${h}px">${seg(m.ap,'c-ap')}${seg(m.fup,'c-fup')}${seg(m.ext,'c-ext')}</div><div class="rv-lbl" style="height:16px;">${monthLabel(m.key).replace('/','<span class="yr">/')}</span></div></div>`;
+    });
+    if(metaRenda)html+=`<div class="rv-meta" style="bottom:${22+metaRenda/max*H}px"><span>Meta ${fmtBRL0(metaRenda)}</span></div>`;
+    document.getElementById('rvChart').innerHTML=html;
+
+    // Tabela mês a mês
+    let t='<tr><th>Mês</th><th>AP</th><th>FUP</th><th>Produtos</th><th>Total</th><th>vs meta</th></tr>';
+    rv.months.forEach(m=>{
+        const gap=m.total-metaRenda;
+        t+=`<tr class="${m.key===rv.nowKey?'current':''}"><td>${monthLabel(m.key)}${m.key===rv.nowKey?' ◂ atual':''}</td><td>${fmtBRL0(m.ap)}</td><td>${fmtBRL0(m.fup)}</td><td>${fmtBRL0(m.ext)}</td><td><b>${fmtBRL0(m.total)}</b></td><td class="${gap>=0?'hit':'miss'}">${metaRenda?(gap>=0?'+':'')+fmtBRL0(gap):'—'}</td></tr>`;
+    });
+    document.getElementById('rvTable').innerHTML=t;
+
+    // Tabela AP por mês de fechamento
+    let a='<tr><th>Fechamento</th><th>APs</th><th>Faturamento</th><th>% base</th><th>FQ</th><th>% final</th><th>Sua comissão</th></tr>';
+    if(!rv.apByMonth.length)a+='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Preencha valor e data de fechamento das APs em "Entregas & Produtos".</td></tr>';
+    rv.apByMonth.slice(0,12).forEach(r=>{
+        a+=`<tr><td>${monthLabel(r.key)}</td><td>${r.n}</td><td>${fmtBRL0(r.total)}</td><td>${(r.base*100).toFixed(1).replace('.',',')}%</td><td>${r.fq.toFixed(2).replace('.',',')}x</td><td><b>${(r.pct*100).toFixed(2).replace('.',',')}%</b></td><td>${fmtBRL(r.comm)}</td></tr>`;
+    });
+    document.getElementById('rvApTable').innerHTML=a;
+
+    renderExtras();runSimulator(rv);
+}
+function runSimulator(rvIn){
+    const rv=rvIn&&rvIn.months?rvIn:computeRecebimentos();
+    const n=Math.max(parseInt(document.getElementById('sim_n').value)||1,1);
+    const t=parseFloat(document.getElementById('sim_t').value)||0;
+    const p=parseInt(document.getElementById('sim_p').value)||1;
+    const total=n*t,r=apPct(total,n),comm=total*r.pct;
+    let out=`${n} AP(s) de ${fmtBRL0(t)} = ${fmtBRL0(total)} no mês<br>% final: <b>${(r.pct*100).toFixed(2).replace('.',',')}%</b> (base ${(r.base*100).toFixed(1).replace('.',',')}% × FQ ${r.fq.toFixed(2).replace('.',',')})<br>Comissão: <b>${fmtBRL(comm)}</b>`;
+    out+=p>1?`<br>Parcelado em ${p}x: <b>${fmtBRL(comm/p)}/mês</b> por ${p} meses`:'<br>À vista: entra tudo no mês seguinte';
+    const gap=Math.max(metaRenda-rv.fupMensalAtual,0);
+    if(metaRenda&&t>0){
+        let need=null;for(let k=1;k<=20;k++){const rr=apPct(k*t,k);if(k*t*rr.pct>=gap){need=k;break;}}
+        out+=`<br><br>Seu FUP já cobre ${fmtBRL0(rv.fupMensalAtual)}. Faltam ${fmtBRL0(gap)} para a meta. Com ticket de ${fmtBRL0(t)} à vista, isso pede <b>${need?need+' AP(s) no mês':'mais de 20 APs'}</b>.`;
+    }
+    document.getElementById('simOut').innerHTML=out;
+}
+function addExtra(){
+    const desc=document.getElementById('ext_desc').value.trim();
+    const valor=parseFloat(document.getElementById('ext_valor').value);
+    const data=document.getElementById('ext_data').value;
+    if(!desc||!(valor>0)||!data){alert('Preencha descrição, valor e data do 1º recebimento.');return;}
+    extras.push({id:uid(),desc,valor,data,parc:parseInt(document.getElementById('ext_parc').value)||1,tipo:document.getElementById('ext_tipo').value});
+    ['ext_desc','ext_valor','ext_data'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ext_parc').value=1;
+    saveExtras();renderReceb();updateDashboards();
+}
+function deleteExtra(id){extras=extras.filter(e=>e.id!==id);saveExtras();renderReceb();updateDashboards();}
+function renderExtras(){
+    const ul=document.getElementById('extList');
+    if(!extras.length){ul.innerHTML='<li><span class="empty-msg" style="padding:0;">Nenhum lançamento.</span></li>';return;}
+    ul.innerHTML=[...extras].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(e=>{
+        const d=parseDate(e.data);
+        return `<li><span><b>${esc(e.desc)}</b><br><span style="color:var(--text-muted);font-size:11px;">${esc(e.tipo)} · ${fmtBRL(e.valor)}${e.parc>1?` em ${e.parc}x`:''} · desde ${d?monthLabel(monthKey(d)):''}</span></span><button class="btn-delete" onclick="deleteExtra('${e.id}')">✕</button></li>`;
+    }).join('');
+}
+
+// ============================================================
+// V2 — FUNIL & RECs
+// ============================================================
+const ETAPAS=[{v:'novo',l:'Novo'},{v:'contato',l:'Em contato'},{v:'aa',l:'AA marcada'},{v:'af',l:'AF feita'},{v:'ap',l:'AP fechada'},{v:'perdido',l:'Perdido'}];
+const ORIGENS={rec:{l:'REC',c:'tag-rec'},mercadox:{l:'Mercado X',c:'tag-mx'},lead:{l:'Lead W1',c:'tag-lead'}};
+function etapaOptions(sel){return ETAPAS.map(e=>`<option value="${e.v}" ${e.v===sel?'selected':''}>${e.l}</option>`).join('');}
+function buildFunilStatic(){
+    document.getElementById('lead_etapa').innerHTML=etapaOptions('novo');
+    const chips=[{v:'ativos',l:'Ativos'},{v:'todos',l:'Todos'},...ETAPAS];
+    document.getElementById('leadEtapaChips').innerHTML=chips.map(c=>`<button class="pf-btn ${c.v===leadEtapaFilter?'active':''}" data-v="${c.v}" onclick="setLeadFilter('${c.v}')">${c.l}</button>`).join('');
+}
+function setLeadFilter(v){leadEtapaFilter=v;document.querySelectorAll('#leadEtapaChips .pf-btn').forEach(b=>b.classList.toggle('active',b.dataset.v===v));renderLeadList();}
+function toggleRecDe(){document.getElementById('lead_recde_wrap').style.display=document.getElementById('lead_origem').value==='rec'?'flex':'none';}
+function autoDates(l){
+    if(l.etapa==='aa'&&!l.dataAA)l.dataAA=todayISO();
+    if(l.etapa==='af'&&!l.dataAF)l.dataAF=todayISO();
+    if(l.etapa==='ap'&&!l.dataAP)l.dataAP=todayISO();
+}
+function readLeadForm(l){
+    l.nome=document.getElementById('lead_nome').value.trim();
+    l.tel=document.getElementById('lead_tel').value.trim();
+    l.nasc=document.getElementById('lead_nasc').value;
+    l.origem=document.getElementById('lead_origem').value;
+    l.recDe=l.origem==='rec'?document.getElementById('lead_recde').value.trim():'';
+    l.etapa=document.getElementById('lead_etapa').value;
+    l.dataAA=document.getElementById('lead_dataAA').value;
+    l.dataAF=document.getElementById('lead_dataAF').value;
+    l.dataAP=document.getElementById('lead_dataAP').value;
+    l.obs=document.getElementById('lead_obs').value.trim();
+    autoDates(l);
+}
+function saveLead(){
+    if(!document.getElementById('lead_nome').value.trim()){alert('Informe o nome do contato.');return;}
+    let l=selectedLeadId?leads.find(x=>x.id===selectedLeadId):null;
+    if(!l){l={id:uid(),criado:todayISO()};leads.push(l);}
+    readLeadForm(l);
+    saveLeads();
+    selectedLeadId=l.id;loadLeadForm();renderFunil();updateDashboards();
+}
+function clearLeadForm(){selectedLeadId=null;loadLeadForm();renderLeadList();}
+function loadLeadForm(){
+    const l=selectedLeadId?leads.find(x=>x.id===selectedLeadId):null;
+    const set=(id,v)=>document.getElementById(id).value=v||'';
+    set('lead_nome',l?.nome);set('lead_tel',l?.tel);set('lead_nasc',l?.nasc);
+    document.getElementById('lead_origem').value=l?.origem||'rec';
+    set('lead_recde',l?.recDe);
+    document.getElementById('lead_etapa').value=l?.etapa||'novo';
+    set('lead_dataAA',l?.dataAA);set('lead_dataAF',l?.dataAF);set('lead_dataAP',l?.dataAP);set('lead_obs',l?.obs);
+    document.getElementById('leadFormTitle').innerText=l?'Editar Contato':'Novo Contato';
+    document.getElementById('leadEditActions').style.display=l?'flex':'none';
+    const btn=document.getElementById('leadToClientBtn');
+    btn.innerText=l?.clienteCriado?'✓ Já é cliente':'➜ Criar cliente (AP)';btn.disabled=!!l?.clienteCriado;
+    toggleRecDe();
+}
+function selectLead(id){selectedLeadId=id;loadLeadForm();renderLeadList();window.scrollTo({top:0,behavior:'smooth'});}
+function setLeadEtapa(id,v,ev){
+    if(ev)ev.stopPropagation();
+    const l=leads.find(x=>x.id===id);if(!l)return;
+    l.etapa=v;autoDates(l);saveLeads();
+    if(selectedLeadId===id)loadLeadForm();
+    renderFunil();updateDashboards();
+}
+function deleteLead(){
+    const l=leads.find(x=>x.id===selectedLeadId);if(!l)return;
+    showModal('🗑️ Excluir contato',`Excluir <span class="modal-client-name">"${esc(l.nome)}"</span> do funil?`,()=>{
+        leads=leads.filter(x=>x.id!==l.id);selectedLeadId=null;saveLeads();loadLeadForm();renderFunil();updateDashboards();
+    });
+}
+function convertLeadToClient(){
+    const l=leads.find(x=>x.id===selectedLeadId);if(!l||l.clienteCriado)return;
+    readLeadForm(l);
+    l.etapa='ap';autoDates(l);l.clienteCriado=true;
+    clients.push({name:l.nome,tasks:[],info:{contato:l.tel||'',nascimento:l.nasc||''},
+        deliveries:{origemCarteira:'proprio',captacao:l.origem==='lead'?'lead':'proprio',status:'Em andamento',apDate:l.dataAP,apParcelas:'1'},products:{}});
+    saveData();saveLeads();
+    selectedEntregasClient=clients.length-1;
+    alert(`${l.nome} agora é cliente. Complete o valor da AP, parcelas e FUP em "Entregas & Produtos".`);
+    switchTab('tab-entregas',document.querySelectorAll('.nav-btn')[5]);
+    loadEntregasData();
+}
+function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return x;}
+function inRange(s,a,b){const d=parseDate(s);return d&&d>=a&&d<b;}
+function computeWeeks(n){
+    const ws=weekStart(new Date()),out=[];
+    for(let i=0;i<n;i++){
+        const a=new Date(ws);a.setDate(a.getDate()-7*i);const b=new Date(a);b.setDate(b.getDate()+7);
+        const w={start:a,recs:0,aa:0,af:0,ap:0};
+        leads.forEach(l=>{
+            if(l.origem==='rec'&&inRange(l.criado,a,b))w.recs++;
+            if(inRange(l.dataAA,a,b))w.aa++;
+            if(inRange(l.dataAF,a,b))w.af++;
+            if(!l.clienteCriado&&inRange(l.dataAP,a,b))w.ap++;
+        });
+        clients.forEach((c,ci)=>{if(ci>0&&inRange(c.deliveries?.apDate,a,b))w.ap++;});
+        out.push(w);
+    }
+    return out;
+}
+function renderFunil(){
+    const weeks=computeWeeks(6);
+    const cell=(v,meta)=>`<td class="${v>=meta?'hit':(v>0?'':'miss')}">${v}</td>`;
+    let t='<tr><th>Semana</th><th>RECs</th><th>AA (8)</th><th>AF (5)</th><th>AP (1)</th><th>RECs/AF (7)</th></tr>';
+    weeks.forEach((w,i)=>{
+        const ratio=w.af?w.recs/w.af:0;
+        t+=`<tr class="${i===0?'current':''}"><td>${fmtDM(w.start)}${i===0?' ◂ atual':''}</td><td>${w.recs}</td>${cell(w.aa,8)}${cell(w.af,5)}${cell(w.ap,1)}<td class="${w.af?(ratio>=7?'hit':'miss'):''}">${w.af?ratio.toFixed(1).replace('.',','):'—'}</td></tr>`;
+    });
+    document.getElementById('funilWeekTable').innerHTML=t;
+    // Conversões dos últimos 90 dias
+    const lim=new Date();lim.setDate(lim.getDate()-90);const now=new Date();now.setDate(now.getDate()+1);
+    const recs=leads.filter(l=>l.origem==='rec'&&inRange(l.criado,lim,now));
+    const aas=leads.filter(l=>inRange(l.dataAA,lim,now)),afs=leads.filter(l=>inRange(l.dataAF,lim,now));
+    const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+    document.getElementById('funilConvNote').innerHTML=`Conversão nos últimos 90 dias: REC → AA <b>${pc(recs.filter(l=>l.dataAA).length,recs.length)}</b> (${recs.length} RECs) · AA → AF <b>${pc(aas.filter(l=>l.dataAF).length,aas.length)}</b> · AF → AP <b>${pc(afs.filter(l=>l.dataAP||l.etapa==='ap').length,afs.length)}</b>`;
+    document.getElementById('clientNamesList').innerHTML=clients.slice(1).map(c=>`<option value="${esc(c.name)}">`).join('');
+    renderLeadList();
+}
+function renderLeadList(){
+    const s=(document.getElementById('leadSearch').value||'').toLowerCase();
+    const order=Object.fromEntries(ETAPAS.map((e,i)=>[e.v,i]));
+    const list=leads.filter(l=>{
+        if(s&&!(l.nome||'').toLowerCase().includes(s)&&!(l.recDe||'').toLowerCase().includes(s))return false;
+        if(leadEtapaFilter==='ativos')return !['ap','perdido'].includes(l.etapa);
+        if(leadEtapaFilter==='todos')return true;
+        return l.etapa===leadEtapaFilter;
+    }).sort((a,b)=>(order[a.etapa]-order[b.etapa])||(b.criado||'').localeCompare(a.criado||''));
+    const box=document.getElementById('leadList');
+    if(!list.length){box.innerHTML='<p class="empty-msg">Nenhum contato nesta visão. Cadastre ao lado.</p>';return;}
+    box.innerHTML=list.map(l=>{
+        const o=ORIGENS[l.origem]||ORIGENS.rec;
+        const fone=(l.tel||'').replace(/\D/g,'');
+        const wpp=fone?`<a class="wpp-link" href="https://wa.me/55${fone}" target="_blank" onclick="event.stopPropagation()">💬</a>`:'<span></span>';
+        const sub=[l.recDe?`indicado por ${esc(l.recDe)}`:'',l.criado?`desde ${fmtDM(parseDate(l.criado))}`:''].filter(Boolean).join(' · ');
+        const prox=l.dataAA&&l.etapa==='aa'?`AA ${fmtDM(parseDate(l.dataAA))}`:(l.dataAF&&l.etapa==='af'?`AF ${fmtDM(parseDate(l.dataAF))}`:'');
+        return `<div class="lead-row ${l.id===selectedLeadId?'selected':''}" onclick="selectLead('${l.id}')"><div><div class="lead-name">${esc(l.nome)} <span class="tag ${o.c}">${o.l}</span></div><div class="lead-sub">${sub}</div></div><span class="lead-sub hide-sm">${prox}</span><span class="hide-sm">${wpp}</span><select onclick="event.stopPropagation()" onchange="setLeadEtapa('${l.id}',this.value,event)">${etapaOptions(l.etapa)}</select></div>`;
+    }).join('');
+}
+
 function updateProgressBar(id,cur,req){
     if(req===0){document.getElementById(`lbl_prog_${id}`).innerText=`${cur} (Livre)`;document.getElementById(`bar_prog_${id}`).style.width='100%';return;}
     document.getElementById(`lbl_prog_${id}`).innerText=`${cur} / ${req}`;
