@@ -532,7 +532,7 @@
                 <div class="metric-box"><h3>Clientes</h3><div class="val" id="w1_k_cli">—</div><div class="metric-sub">status Cliente</div></div>
                 <div class="metric-box"><h3>FUPs ativos</h3><div class="val" id="w1_k_fup">—</div><div class="metric-sub" id="w1_k_fup_sub">Assinaturas</div></div>
                 <div class="metric-box"><h3>PPs históricos</h3><div class="val" id="w1_k_pps">—</div><div class="metric-sub" id="w1_k_pps_tri">no trimestre: —</div></div>
-                <div class="metric-box"><h3>Comissões (mês)</h3><div class="val" id="w1_k_com">—</div><div class="metric-sub">lançadas no mês atual</div></div>
+                <div class="metric-box" style="border-color:var(--yellow);"><h3>Disponível p/ saque</h3><div class="val" id="w1_k_com">—</div><div class="metric-sub" id="w1_k_com_sub">igual ao W1nner</div></div>
             </div>
             <div class="card" style="margin:0;">
                 <h2>Funil no W1nner</h2>
@@ -554,7 +554,7 @@
             <div class="card" style="margin:0;">
                 <h2>Comissões lançadas no W1nner</h2>
                 <div class="table-scroll"><table class="data-table" id="w1_com"></table></div>
-                <p class="note">Somadas a partir do extrato de "Minhas Comissões", por mês da data do lançamento. Estornos e débitos entram negativos.</p>
+                <p class="note">Extrato de "Minhas Comissões". <b>Mês de referência</b>: AP e FUP entram no mês a que se referem (creditados no mês seguinte); produtos, no mês do crédito. <b>Creditado no mês</b>: o que caiu na sua conta W1nner naquele mês. Estornos entram negativos. O disponível para saque é calculado como no W1nner: tudo que entrou menos tudo que saiu.</p>
             </div>
         </div>
     </div>
@@ -1472,17 +1472,34 @@ function w1Cat(c){
     if((c.produto||'')==='Extra'){if(/^AP\b/i.test(c.obs||''))return 'ap';if(/^FUP\b/i.test(c.obs||''))return 'fup';}
     return 'prod';
 }
+// Mês de referência de AP/FUP vem na observação ("FUP | 09/2026 | Proprio | ..."): o W1nner credita no mês seguinte
+function w1RefMonth(c){
+    const m=(c.obs||'').match(/\b(\d{2})\/(\d{2}|\d{4})\b/);if(!m)return null;
+    const y=m[2].length===2?'20'+m[2]:m[2];return `${y}-${m[1]}`;
+}
+function w1Signed(c){ // valor com sinal: saques e débitos negativos
+    const cat=w1Cat(c);
+    if(cat==='saque'||c.tipo==='Saída')return -Math.abs(c.valor||0);
+    return c.valor||0;
+}
+// Agrupa por mês de REFERÊNCIA (competência): AP e FUP pelo mês a que se referem; produtos pelo mês do crédito
 function w1Realized(){
-    const out={};
+    const out={};const get=k=>out[k]=out[k]||{ap:0,fup:0,ext:0,saque:0,creditado:0};
     (w1?.comissoes||[]).forEach(c=>{
-        if(!c.data||c.valor==null)return;const cat=w1Cat(c);const k=c.data.slice(0,7);
-        const m=out[k]=out[k]||{ap:0,fup:0,ext:0,saque:0};
-        if(cat==='saque'){m.saque+=Math.abs(c.valor);return;}
-        const v=(c.tipo==='Saída'&&c.valor>0)?-c.valor:c.valor;
-        if(cat==='ap')m.ap+=v;else if(cat==='fup')m.fup+=v;else m.ext+=v;
+        if(!c.data||c.valor==null)return;const cat=w1Cat(c);const credK=c.data.slice(0,7);
+        if(cat==='saque'){get(credK).saque+=Math.abs(c.valor);return;}
+        const v=w1Signed(c);get(credK).creditado+=v;
+        const k=(cat==='ap'||cat==='fup')?(w1RefMonth(c)||credK):credK;
+        const m=get(k);if(cat==='ap')m.ap+=v;else if(cat==='fup')m.fup+=v;else m.ext+=v;
     });
     Object.values(out).forEach(m=>m.total=m.ap+m.fup+m.ext);
     return out;
+}
+// Saldo disponível para saque = tudo que entrou − tudo que saiu (igual ao "Disponível para receber" do W1nner)
+function w1Balance(){
+    let disp=0,sacado=0;
+    (w1?.comissoes||[]).forEach(c=>{if(c.valor==null)return;disp+=w1Signed(c);if(w1Cat(c)==='saque')sacado+=Math.abs(c.valor);});
+    return {disponivel:Math.round(disp*100)/100,sacado:Math.round(sacado*100)/100};
 }
 function w1PaidConsultorias(){
     return (w1?.assinaturas||[]).filter(s=>/consultoria/i.test(s.categoria||'')&&!/exclu/i.test(s.situacao||'')).map(s=>{
@@ -1502,7 +1519,7 @@ function computeRecebimentosW1(){
     const apByMonth=Object.keys(groups).sort().reverse().map(k=>{
         const list=groups[k];const total=list.reduce((s,a)=>s+a.valor,0);
         const n=new Set(list.map(a=>a.contatoId||a.nome)).size;const r=apPct(total,n);let comm=0;
-        list.forEach(a=>{const c=a.valor*r.pct;comm+=c;for(let j=0;j<a.parc;j++){const mk=addMonthsKey(k,1+j);eng[mk]=(eng[mk]||0)+c/a.parc;}});
+        list.forEach(a=>{const c=a.valor*r.pct;comm+=c;for(let j=0;j<a.parc;j++){const mk=addMonthsKey(k,j);eng[mk]=(eng[mk]||0)+c/a.parc;}});
         return {key:k,n,total,...r,comm};
     });
     // Calibra a estimativa com o que de fato entrou no último mês fechado
@@ -1525,7 +1542,7 @@ function computeRecebimentosW1(){
     });
     months.forEach(m=>m.total=m.ap+m.fup+m.ext);
     const fupAtivos=(w1.assinaturas||[]).filter(s=>/acompanhamento/i.test(s.categoria||'')&&/ativo/i.test(s.situacao||'')).length;
-    return {months,apByMonth,fupMensalAtual:fupAvg,fupAtivos,nowKey,fonte:'w1',creditadoMes:real[nowKey]?.total||0,calib,real};
+    return {months,apByMonth,fupMensalAtual:fupAvg,fupAtivos,nowKey,fonte:'w1',creditadoMes:real[nowKey]?.creditado||0,disponivel:w1Balance().disponivel,calib,real};
 }
 function w1SyncLabel(){
     if(!w1?.sincronizadoEm)return 'nunca';
@@ -1553,7 +1570,7 @@ function renderW1(){
     set('w1_k_fup_sub',Object.entries(porPlano).map(([p,n])=>`${n} ${p}`).join(' · ')||'Assinaturas');
     set('w1_k_pps',(w1.dashboard?.ppsHistoricos||0).toLocaleString('pt-BR',{maximumFractionDigits:2}));
     set('w1_k_pps_tri',`no trimestre: ${(w1.dashboard?.ppsTrimestre||0).toLocaleString('pt-BR',{maximumFractionDigits:2})}`);
-    set('w1_k_com',fmtBRL0(real[nowKey]?.total||0));
+    const bal=w1Balance();set('w1_k_com',fmtBRL(bal.disponivel));set('w1_k_com_sub',`já sacado: ${fmtBRL0(bal.sacado)}`);
     // Funil por status
     const labels=Object.fromEntries((w1.statusReport||[]).map(s=>[s.status,s.label]));
     const byS={};cont.forEach(c=>{const s=byS[c.status]=byS[c.status]||{n:0,parados:0,dias:0};s.n++;s.dias+=c.diasStatus||0;if((c.diasStatus||0)>14)s.parados++;});
@@ -1581,8 +1598,8 @@ function renderW1(){
         const plano=(s.categoria.match(/\((.*)\)/)||[])[1]||s.categoria;const ok=/ativo/i.test(s.situacao||'');
         return `<li><span><b>${esc(s.cliente)}</b><br><span style="color:var(--text-muted);font-size:11px;">${esc(plano)} · desde ${s.inicio?fmtDM(parseDate(s.inicio)):'—'} · ${esc(s.cobranca)}</span></span><span class="tag ${ok?'tag-cli':'tag-ana'}">${esc(s.situacao)}</span></li>`;}).join('')||'<li>Nenhuma assinatura de FUP.</li>';
     // Comissões por mês
-    let c='<tr><th>Mês</th><th>AP</th><th>FUP</th><th>Produtos</th><th>Total creditado</th><th>Saques</th></tr>';
-    Object.keys(real).sort().reverse().slice(0,12).forEach(k=>{const m=real[k];c+=`<tr class="${k===nowKey?'current':''}"><td>${monthLabel(k)}</td><td>${fmtBRL0(m.ap)}</td><td>${fmtBRL0(m.fup)}</td><td>${fmtBRL0(m.ext)}</td><td><b>${fmtBRL0(m.total)}</b></td><td>${fmtBRL0(m.saque)}</td></tr>`;});
+    let c='<tr><th>Mês de referência</th><th>AP</th><th>FUP</th><th>Produtos</th><th>Total do mês</th><th>Creditado no mês</th><th>Saques no mês</th></tr>';
+    Object.keys(real).sort().reverse().slice(0,12).forEach(k=>{const m=real[k];c+=`<tr class="${k===nowKey?'current':''}"><td>${monthLabel(k)}${k===nowKey?' (parcial)':''}</td><td>${fmtBRL(m.ap)}</td><td>${fmtBRL(m.fup)}</td><td>${fmtBRL(m.ext)}</td><td><b>${fmtBRL(m.total)}</b></td><td>${fmtBRL(m.creditado)}</td><td>${fmtBRL(m.saque)}</td></tr>`;});
     document.getElementById('w1_com').innerHTML=c;
     document.getElementById('w1_diag').innerHTML=`Versão do script: ${esc(w1.versao||'?')}<br>Contatos: ${cont.length} · Assinaturas: ${ass.length} · Lançamentos: ${(w1.comissoes||[]).length}<br>Semanas: ${sem.length} · Meses: ${mes.length}`;
 }
@@ -1599,9 +1616,9 @@ function renderReceb(){
     const cur=rv.months.find(m=>m.key===rv.nowKey);
     const fut=rv.months.filter(m=>m.key>rv.nowKey);
     document.getElementById('rv_k_mes').innerText=fmtBRL0(cur.total);
-    document.getElementById('rv_k_mes_sub').innerText=(rv.fonte==='w1'?`já creditado ${fmtBRL0(rv.creditadoMes)} · `:'')+(metaRenda?`${Math.round(cur.total/metaRenda*100)}% da meta`:'Defina a meta');
+    document.getElementById('rv_k_mes_sub').innerText=(rv.fonte==='w1'?`disponível p/ saque ${fmtBRL(rv.disponivel)} · `:'')+(metaRenda?`${Math.round(cur.total/metaRenda*100)}% da meta`:'Defina a meta');
     document.getElementById('rvChartNote').innerHTML=rv.fonte==='w1'
-        ? `<b>Fonte: W1nner</b> (sincronizado em ${w1SyncLabel()}). Meses passados = comissões realmente creditadas no extrato. Meses futuros = estimativa: parcelas restantes das consultorias pagas pela regra de AP (ajustada pelo que entrou no último mês, fator ${rv.calib.toFixed(2).replace('.',',')}), mais a média dos últimos 3 meses de FUP e de produtos, mais os lançamentos manuais ao lado.`
+        ? `<b>Fonte: W1nner</b> (sincronizado em ${w1SyncLabel()}). Cada mês mostra a <b>competência</b>: AP e FUP aparecem no mês a que se referem (o W1nner credita no mês seguinte; ex.: o AP e o FUP de setembro, creditados em 09/10, estão em set/26). Produtos aparecem no mês em que foram creditados. Meses passados = valores reais do extrato. Mês atual e futuros = estimativa: parcelas restantes das consultorias pagas pela regra de AP (ajustada pelo que entrou no último mês, fator ${rv.calib.toFixed(2).replace('.',',')}), mais a média dos últimos 3 meses de FUP e de produtos, mais os lançamentos manuais ao lado.`
         : 'Meses à esquerda do atual aparecem apagados (estimativa do que já caiu). Cada mês mostra o que entra na sua conta, já considerando que a W1 paga no mês seguinte ao fechamento e repassa nas mesmas parcelas do cliente. Sincronize com o W1nner para usar os valores reais.';
     document.getElementById('rv_k_prox').innerText=fmtBRL0(fut[0]?.total||0);
     document.getElementById('rv_k_media').innerText=fmtBRL0(fut.slice(0,3).reduce((s,m)=>s+m.total,0)/3);
