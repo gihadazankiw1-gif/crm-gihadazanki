@@ -347,6 +347,7 @@
         <button class="mn-btn active" id="mn-tab-dashboard" onclick="switchTab('tab-dashboard',null)"><span class="mn-icon">📊</span>Dash</button>
         <button class="mn-btn" id="mn-tab-funil" onclick="switchTab('tab-funil',null)"><span class="mn-icon">🎯</span>Funil</button>
         <button class="mn-btn" id="mn-tab-receb" onclick="switchTab('tab-receb',null)"><span class="mn-icon">💰</span>Receb.</button>
+        <button class="mn-btn" id="mn-tab-w1" onclick="switchTab('tab-w1',null)"><span class="mn-icon">🔄</span>W1nner</button>
         <button class="mn-btn" id="mn-tab-capa" onclick="switchTab('tab-capa',null)"><span class="mn-icon">👤</span>Clientes</button>
         <button class="mn-btn" id="mn-tab-tarefas" onclick="switchTab('tab-tarefas',null)"><span class="mn-icon">⚡</span>Tarefas</button>
         <button class="mn-btn" id="mn-tab-entregas" onclick="switchTab('tab-entregas',null)"><span class="mn-icon">📋</span>Entregas</button>
@@ -362,6 +363,7 @@
         <button class="nav-btn active" onclick="switchTab('tab-dashboard',this)">📊 Dashboard</button>
         <button class="nav-btn" onclick="switchTab('tab-funil',this)">🎯 Funil & RECs</button>
         <button class="nav-btn" onclick="switchTab('tab-receb',this)">💰 Recebimentos</button>
+        <button class="nav-btn" onclick="switchTab('tab-w1',this)">🔄 W1nner</button>
         <button class="nav-btn" onclick="switchTab('tab-capa',this)">👤 Base de Clientes</button>
         <button class="nav-btn" onclick="switchTab('tab-tarefas',this)">⚡ Gestão de Tarefas</button>
         <button class="nav-btn" onclick="switchTab('tab-entregas',this)">📋 Entregas & Produtos</button>
@@ -473,7 +475,7 @@
             <h2>Projeção de Recebimentos</h2>
             <div class="rv-chart" id="rvChart"></div>
             <div class="legend"><span><i class="c-ap"></i>Consultorias (AP)</span><span><i class="c-fup"></i>Acompanhamentos (FUP)</span><span><i class="c-ext"></i>Produtos e outras</span><span style="color:var(--yellow);">--- Meta</span></div>
-            <p class="note">Meses à esquerda do atual aparecem apagados (estimativa do que já caiu). Cada mês mostra o que entra na sua conta, já considerando que a W1 paga no mês seguinte ao fechamento e repassa nas mesmas parcelas do cliente.</p>
+            <p class="note" id="rvChartNote">Meses à esquerda do atual aparecem apagados (estimativa do que já caiu). Cada mês mostra o que entra na sua conta, já considerando que a W1 paga no mês seguinte ao fechamento e repassa nas mesmas parcelas do cliente.</p>
             <h3 class="section-subtitle" style="margin-top:20px;">Mês a mês</h3>
             <div class="table-scroll"><table class="data-table" id="rvTable"></table></div>
             <h3 class="section-subtitle" style="margin-top:22px;">Comissão de AP por mês de fechamento</h3>
@@ -504,6 +506,55 @@
                 <button class="btn-primary" style="width:100%;" onclick="addExtra()">Adicionar</button>
                 <ul class="mini-list" id="extList" style="margin-top:12px;max-height:240px;overflow-y:auto;"></ul>
                 <p class="note">Lance aqui a comissão que você espera receber do produto (base da sua posição sobre o repasse da parceira) ou de indicações para outras BUs.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== W1NNER (dados sincronizados) ===================== -->
+<div id="tab-w1" class="tab-content">
+    <div class="container-flex">
+        <div class="card col-left highlight">
+            <h2>Sincronização</h2>
+            <p style="font-size:13px;margin:0 0 6px;">Última: <b id="w1_last" style="color:var(--yellow);">nunca</b></p>
+            <p class="note" style="margin-top:0;">Arraste o botão abaixo para a sua <b>barra de favoritos</b> (uma vez só). Para atualizar, abra o W1nner e clique nele.</p>
+            <div style="text-align:center;margin:16px 0;">
+                <a id="w1_bookmarklet" href="#" class="btn-primary" style="display:inline-block;text-decoration:none;cursor:grab;" onclick="event.preventDefault();alert('Arraste este botão para a barra de favoritos do Chrome. Se a barra não aparecer, aperte Ctrl+Shift+B (Windows) ou Cmd+Shift+B (Mac).');">⭐ Sincronizar CRM</a>
+            </div>
+            <p class="note">O favorito só <b>lê</b> dados do W1nner (contatos, propostas, assinaturas, AFs, comissões e PPs). Nada é alterado lá. Os dados ficam no seu Firebase, protegidos pelo seu login.</p>
+            <h3 class="section-subtitle" style="margin-top:18px;">Diagnóstico</h3>
+            <div id="w1_diag" class="note" style="margin-top:0;"></div>
+            <button class="btn-ghost" style="margin-top:10px;" onclick="copyW1Diag()">Copiar diagnóstico</button>
+        </div>
+        <div class="col-main" style="display:flex;flex-direction:column;gap:20px;">
+            <div class="dash-metrics" style="margin:0;">
+                <div class="metric-box"><h3>Contatos</h3><div class="val" id="w1_k_cont">—</div><div class="metric-sub">no W1nner</div></div>
+                <div class="metric-box"><h3>Clientes</h3><div class="val" id="w1_k_cli">—</div><div class="metric-sub">status Cliente</div></div>
+                <div class="metric-box"><h3>FUPs ativos</h3><div class="val" id="w1_k_fup">—</div><div class="metric-sub" id="w1_k_fup_sub">Assinaturas</div></div>
+                <div class="metric-box"><h3>PPs históricos</h3><div class="val" id="w1_k_pps">—</div><div class="metric-sub" id="w1_k_pps_tri">no trimestre: —</div></div>
+                <div class="metric-box"><h3>Comissões (mês)</h3><div class="val" id="w1_k_com">—</div><div class="metric-sub">lançadas no mês atual</div></div>
+            </div>
+            <div class="card" style="margin:0;">
+                <h2>Funil no W1nner</h2>
+                <div class="table-scroll"><table class="data-table" id="w1_status"></table></div>
+                <h3 class="section-subtitle" style="margin-top:20px;">Por semana</h3>
+                <div class="table-scroll"><table class="data-table" id="w1_weeks"></table></div>
+                <p class="note">Números do Centro Econômico do W1nner (Resultados), por semana de segunda a domingo. RECs = indicações registradas no período.</p>
+            </div>
+            <div class="container-flex" style="gap:20px;">
+                <div class="card" style="margin:0;">
+                    <h2>Quem mais indica</h2>
+                    <ul class="mini-list" id="w1_top_rec"></ul>
+                </div>
+                <div class="card" style="margin:0;">
+                    <h2>Assinaturas (FUP)</h2>
+                    <ul class="mini-list" id="w1_ass"></ul>
+                </div>
+            </div>
+            <div class="card" style="margin:0;">
+                <h2>Comissões lançadas no W1nner</h2>
+                <div class="table-scroll"><table class="data-table" id="w1_com"></table></div>
+                <p class="note">Somadas a partir do extrato de "Minhas Comissões", por mês da data do lançamento. Estornos e débitos entram negativos.</p>
             </div>
         </div>
     </div>
@@ -722,7 +773,9 @@ const CAPA_FIELDS=['apelido','contato','nascimento','ocupacao','familia','sonho'
 
 // === ESTADO ===
 let clients=[],manualPPs={produtos:0,bus:0};
-let leads=[],extras=[],metaRenda=6000;
+let leads=[],extras=[],metaRenda=6000,dataReady=false;
+let w1=null; // dados sincronizados do W1nner
+const W1_ORIGIN='https://w1nner.w1consultoria.com.br';
 let selectedLeadId=null,leadEtapaFilter='ativos';
 let selectedCapaIndex=null,selectedTaskClient=null,selectedEntregasClient=null,draggedIndex=null;
 let isDashProprioOnly=true,saveIndicatorTimer=null,dashProductFilter='ambos';
@@ -759,7 +812,11 @@ auth.onAuthStateChanged(async user => {
         document.getElementById('loadingScreen').style.display = 'none';
         buildProductsGrid();
         buildFunilStatic();
-        switchTab('tab-dashboard', document.querySelector('.nav-btn'));
+        initW1Receiver();
+        buildBookmarklet();
+        dataReady=true;
+        if(location.hash==='#w1sync') switchTab('tab-w1', document.querySelector(".nav-btn[onclick*='tab-w1']"));
+        else switchTab('tab-dashboard', document.querySelector('.nav-btn'));
     } else {
         currentUser = null;
         document.getElementById('loadingScreen').style.display = 'none';
@@ -847,6 +904,8 @@ async function initializeData(){
             manualPPs=data.manualPPs||{produtos:0,bus:0};
             leads=toArray(data.leads);
             extras=toArray(data.extras);
+            w1=data.w1nner||null;
+            if(w1){['contatos','assinaturas','comissoes','statusReport'].forEach(k=>w1[k]=toArray(w1[k]));if(w1.resultados){w1.resultados.semanas=toArray(w1.resultados.semanas);w1.resultados.meses=toArray(w1.resultados.meses);}w1.assinaturas.forEach(s=>{if(s.cobrancas)s.cobrancas=toArray(s.cobrancas);});}
             if(data.settings?.metaRenda) metaRenda=data.settings.metaRenda;
             document.getElementById('userCurrentCargo').value=data.settings?.cargo||'FA_I';
             const lb=data.settings?.lastBackup;
@@ -878,6 +937,7 @@ function refreshAllViews(){
     if(document.getElementById('tab-entregas').classList.contains('active'))renderEntregasList();
     if(document.getElementById('tab-funil').classList.contains('active'))renderFunil();
     if(document.getElementById('tab-receb').classList.contains('active'))renderReceb();
+    if(document.getElementById('tab-w1').classList.contains('active'))renderW1();
 }
 function factoryReset(){
     showModal('🧹 Zerar Dados','Isso apagará <strong style="color:var(--red)">todos os seus clientes e dados</strong> deste login. Irreversível.',
@@ -978,7 +1038,7 @@ function updateDashboards(){
     document.getElementById('dash_rv_prox').innerText=fmtBRL0(nxt?nxt.total:0);
     document.getElementById('dash_rv_fup').innerText=fmtBRL0(rv.fupMensalAtual);
     document.getElementById('dash_rv_fup_n').innerText=`${rv.fupAtivos} FUPs ativos`;
-    const wk=computeWeeks(1)[0];
+    const wk=(w1Weeks(1)||computeWeeks(1))[0];
     document.getElementById('dash_wk_funil').innerHTML=`<span class="${wk.aa>=8?'hit':''}">${wk.aa}</span> / <span class="${wk.af>=5?'hit':''}">${wk.af}</span> / <span class="${wk.ap>=1?'hit':''}">${wk.ap}</span>`;
     document.getElementById('dash_wk_recs').innerText=wk.recs;
     document.getElementById('dash_wk_recs_sub').innerText=wk.af?`${(wk.recs/wk.af).toFixed(1)} por AF (meta 7)`:'Meta: 7 por AF';
@@ -1239,6 +1299,14 @@ function updateCareerDashboard(){
         }
     });
 
+    let fonteCarreira='';
+    if(w1&&w1.assinaturas){
+        // Com W1nner sincronizado: clientes = consultorias pagas (CPFs únicos), FUP = acompanhamentos ativos, PPs = históricos do W1nner
+        cc=new Set(w1PaidConsultorias().map(a=>a.contatoId||a.nome)).size;
+        cf=w1.assinaturas.filter(s=>/acompanhamento/i.test(s.categoria||'')&&/ativo/i.test(s.situacao||'')).length;
+        if(w1.dashboard?.ppsHistoricos)pps=w1.dashboard.ppsHistoricos;
+        fonteCarreira=` · Clientes, FUPs e PPs totais vindos do W1nner (${w1SyncLabel()}).`;
+    }
     const prodPPs = manualPPs.produtos||0;
     const pC = rule.clients > 0 ? Math.min((cc/rule.clients)*100, 100) : 100;
     const pF = rule.fup    > 0 ? Math.min((cf/rule.fup)*100,    100) : 100;
@@ -1252,7 +1320,7 @@ function updateCareerDashboard(){
     document.getElementById('bar_prog_prod').style.width=`${pD}%`;
     document.getElementById('careerNote').innerText = rule.partner
         ? 'Corrida de Partner: ser FA IV com 32+ APs de CPFs únicos e treinamentos concluídos; 3 meses com 500 PPs/mês, 80 acompanhamentos ativos no fim, estrutura mínima de 5 BPs com linhas de FA III/FA II, 70% core business. As barras acima mostram só a parte individual.'
-        : 'Critérios do Plano de Desenvolvimento Comercial 2026 (cumulativos, nomeação semanal). PPs de W1 Capital, Business, Patrimonial e Technology não contam como PPs de Produtos.';
+        : 'Critérios do Plano de Desenvolvimento Comercial 2026 (cumulativos, nomeação semanal). PPs de W1 Capital, Business, Patrimonial e Technology não contam como PPs de Produtos.'+fonteCarreira;
     const bottleneck=Object.entries(vals).sort((a,b)=>a[1]-b[1])[0];
     const bmsg=document.getElementById('careerBottleneckMsg');
     if(prog<100) bmsg.innerText=`⚠️ Gargalo atual: ${labels[bottleneck[0]]} (${bottleneck[1].toFixed(1)}%)`;
@@ -1260,7 +1328,7 @@ function updateCareerDashboard(){
 
     updateProgressBar('clients',cc,rule.clients);
     updateProgressBar('fup',cf,rule.fup);
-    const ppsStr=parseFloat(pps.toFixed(4)).toString();
+    const ppsStr=pps.toLocaleString('pt-BR',{maximumFractionDigits:2});
     document.getElementById('lbl_prog_pps').innerText=`${ppsStr} / ${rule.pps}`;
     document.getElementById('bar_prog_pps').style.width=`${pP}%`;
 
@@ -1325,6 +1393,10 @@ function fupPct(plano,captacao){
     return 0.50;
 }
 function computeRecebimentos(){
+    if(w1&&w1.comissoes&&w1.comissoes.length)return computeRecebimentosW1();
+    return computeRecebimentosManual();
+}
+function computeRecebimentosManual(){
     const nowKey=monthKey(new Date());
     const first=addMonthsKey(nowKey,-5),last=addMonthsKey(nowKey,6);
     const months=[];for(let k=first;k<=last;k=addMonthsKey(k,1))months.push({key:k,ap:0,fup:0,ext:0,total:0});
@@ -1364,7 +1436,159 @@ function computeRecebimentos(){
         for(let j=0;j<p;j++){const m=at(addMonthsKey(k,j));if(m)m.ext+=v/p;}
     });
     months.forEach(m=>m.total=m.ap+m.fup+m.ext);
-    return {months,apByMonth,fupMensalAtual,fupAtivos,nowKey};
+    return {months,apByMonth,fupMensalAtual,fupAtivos,nowKey,fonte:'manual'};
+}
+
+// ============================================================
+// V3 — DADOS DO W1NNER (sincronizados pelo favorito)
+// ============================================================
+function initW1Receiver(){
+    window.addEventListener('message',async e=>{
+        if(e.origin!==W1_ORIGIN||!e.data||typeof e.data!=='object')return;
+        const reply=m=>{try{e.source.postMessage(m,W1_ORIGIN);}catch(_){}};
+        if(e.data.type==='w1nner-hello'){if(currentUser&&dataReady)reply({type:'crm-ready'});return;}
+        if(e.data.type!=='w1nner-sync')return;
+        try{
+            const p=JSON.parse(JSON.stringify(e.data.payload||{}));
+            if(!Array.isArray(p.contatos)||!Array.isArray(p.comissoes))throw new Error('Dados incompletos recebidos do W1nner.');
+            await db.ref(getUserDbPath('w1nner')).set(p);
+            w1=p;
+            const resumo=`${p.contatos.length} contatos, ${p.assinaturas.length} assinaturas e ${p.comissoes.length} lançamentos de comissão.`;
+            reply({type:'crm-saved',resumo});
+            showSaveIndicator();
+            switchTab('tab-w1',document.querySelector(".nav-btn[onclick*='tab-w1']"));
+        }catch(err){console.error(err);reply({type:'crm-error',message:err.message});}
+    });
+    if(location.hash==='#w1sync'&&window.opener){try{window.opener.postMessage({type:'crm-ready'},W1_ORIGIN);}catch(_){}}
+}
+function buildBookmarklet(){
+    const src=new URL('sync.js',location.href).href;
+    const code=`javascript:(function(){var s=document.createElement('script');s.src='${src}?v='+Date.now();document.body.appendChild(s);})();`;
+    const a=document.getElementById('w1_bookmarklet');if(a)a.setAttribute('href',code);
+}
+// Classifica cada lançamento do extrato de comissões
+function w1Cat(c){
+    if(/solicita/i.test(c.produto||''))return 'saque';
+    if((c.produto||'')==='Extra'){if(/^AP\b/i.test(c.obs||''))return 'ap';if(/^FUP\b/i.test(c.obs||''))return 'fup';}
+    return 'prod';
+}
+function w1Realized(){
+    const out={};
+    (w1?.comissoes||[]).forEach(c=>{
+        if(!c.data||c.valor==null)return;const cat=w1Cat(c);const k=c.data.slice(0,7);
+        const m=out[k]=out[k]||{ap:0,fup:0,ext:0,saque:0};
+        if(cat==='saque'){m.saque+=Math.abs(c.valor);return;}
+        const v=(c.tipo==='Saída'&&c.valor>0)?-c.valor:c.valor;
+        if(cat==='ap')m.ap+=v;else if(cat==='fup')m.fup+=v;else m.ext+=v;
+    });
+    Object.values(out).forEach(m=>m.total=m.ap+m.fup+m.ext);
+    return out;
+}
+function w1PaidConsultorias(){
+    return (w1?.assinaturas||[]).filter(s=>/consultoria/i.test(s.categoria||'')&&!/exclu/i.test(s.situacao||'')).map(s=>{
+        const pago=(s.cobrancas||[]).find(c=>/pago/i.test(c.situacao||''));
+        return pago&&s.inicio?{nome:s.cliente,contatoId:s.contatoId,inicio:s.inicio,valor:pago.valor||0,parc:pago.parcelas||1}:null;
+    }).filter(Boolean);
+}
+function computeRecebimentosW1(){
+    const nowKey=monthKey(new Date());
+    const first=addMonthsKey(nowKey,-5),last=addMonthsKey(nowKey,6);
+    const months=[];for(let k=first;k<=last;k=addMonthsKey(k,1))months.push({key:k,ap:0,fup:0,ext:0,total:0,real:k<nowKey});
+    const real=w1Realized();
+    // Motor de AP sobre as consultorias pagas do W1nner (regra AP vigente)
+    const groups={};
+    w1PaidConsultorias().forEach(a=>{const k=a.inicio.slice(0,7);(groups[k]=groups[k]||[]).push(a);});
+    const eng={};
+    const apByMonth=Object.keys(groups).sort().reverse().map(k=>{
+        const list=groups[k];const total=list.reduce((s,a)=>s+a.valor,0);
+        const n=new Set(list.map(a=>a.contatoId||a.nome)).size;const r=apPct(total,n);let comm=0;
+        list.forEach(a=>{const c=a.valor*r.pct;comm+=c;for(let j=0;j<a.parc;j++){const mk=addMonthsKey(k,1+j);eng[mk]=(eng[mk]||0)+c/a.parc;}});
+        return {key:k,n,total,...r,comm};
+    });
+    // Calibra a estimativa com o que de fato entrou no último mês fechado
+    const lastFull=addMonthsKey(nowKey,-1);
+    const realAP=real[lastFull]?.ap||0,engAP=eng[lastFull]||0;
+    const calib=(realAP>0&&engAP>0)?Math.min(Math.max(realAP/engAP,0.5),2):1;
+    // Médias dos últimos 3 meses fechados (FUP e produtos)
+    const prev=[1,2,3].map(i=>real[addMonthsKey(nowKey,-i)]||{fup:0,ext:0});
+    const avg=f=>{const v=prev.map(f).filter(x=>x>0);return v.length?v.reduce((s,x)=>s+x,0)/v.length:0;};
+    const fupAvg=avg(m=>m.fup),prodAvg=avg(m=>m.ext);
+    months.forEach(m=>{
+        if(m.real){const r=real[m.key]||{ap:0,fup:0,ext:0};m.ap=r.ap;m.fup=r.fup;m.ext=r.ext;}
+        else{m.ap=(eng[m.key]||0)*calib;m.fup=fupAvg;m.ext=prodAvg;}
+    });
+    // Lançamentos manuais (produtos futuros) entram por cima, só em meses futuros
+    extras.forEach(e=>{
+        const dt=parseDate(e.data);const v=parseFloat(e.valor);if(!dt||!(v>0))return;
+        const p=parseInt(e.parc)||1;const k=monthKey(dt);
+        for(let j=0;j<p;j++){const m=months.find(x=>x.key===addMonthsKey(k,j));if(m&&!m.real)m.ext+=v/p;}
+    });
+    months.forEach(m=>m.total=m.ap+m.fup+m.ext);
+    const fupAtivos=(w1.assinaturas||[]).filter(s=>/acompanhamento/i.test(s.categoria||'')&&/ativo/i.test(s.situacao||'')).length;
+    return {months,apByMonth,fupMensalAtual:fupAvg,fupAtivos,nowKey,fonte:'w1',creditadoMes:real[nowKey]?.total||0,calib,real};
+}
+function w1SyncLabel(){
+    if(!w1?.sincronizadoEm)return 'nunca';
+    const d=new Date(w1.sincronizadoEm);
+    return `${fmtDM(d)} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+const W1_STATUS_ORDER=['qualification','qualified','analysis_scheduled','analysis_canceled','awaiting_proposal_send','proposal_sent','proposal_signed','client','lost','disqualified'];
+function renderW1(){
+    document.getElementById('w1_last').innerText=w1SyncLabel();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=v;};
+    if(!w1){
+        ['w1_k_cont','w1_k_cli','w1_k_fup','w1_k_pps','w1_k_com'].forEach(id=>set(id,'—'));
+        ['w1_status','w1_weeks','w1_com'].forEach(id=>document.getElementById(id).innerHTML='<tr><td style="text-align:center;color:var(--text-muted);">Ainda sem dados. Use o favorito ⭐ Sincronizar CRM dentro do W1nner.</td></tr>');
+        document.getElementById('w1_top_rec').innerHTML='';document.getElementById('w1_ass').innerHTML='';
+        document.getElementById('w1_diag').innerHTML='Nenhuma sincronização ainda.';return;
+    }
+    const cont=w1.contatos||[],ass=w1.assinaturas||[];
+    const real=w1Realized(),nowKey=monthKey(new Date());
+    set('w1_k_cont',cont.length);
+    set('w1_k_cli',cont.filter(c=>c.status==='client').length);
+    const fups=ass.filter(s=>/acompanhamento/i.test(s.categoria||''));
+    const fAtivos=fups.filter(s=>/ativo/i.test(s.situacao||''));
+    set('w1_k_fup',fAtivos.length);
+    const porPlano=fAtivos.reduce((o,s)=>{const p=(s.categoria.match(/\((.*)\)/)||[])[1]||'?';o[p]=(o[p]||0)+1;return o;},{});
+    set('w1_k_fup_sub',Object.entries(porPlano).map(([p,n])=>`${n} ${p}`).join(' · ')||'Assinaturas');
+    set('w1_k_pps',(w1.dashboard?.ppsHistoricos||0).toLocaleString('pt-BR',{maximumFractionDigits:2}));
+    set('w1_k_pps_tri',`no trimestre: ${(w1.dashboard?.ppsTrimestre||0).toLocaleString('pt-BR',{maximumFractionDigits:2})}`);
+    set('w1_k_com',fmtBRL0(real[nowKey]?.total||0));
+    // Funil por status
+    const labels=Object.fromEntries((w1.statusReport||[]).map(s=>[s.status,s.label]));
+    const byS={};cont.forEach(c=>{const s=byS[c.status]=byS[c.status]||{n:0,parados:0,dias:0};s.n++;s.dias+=c.diasStatus||0;if((c.diasStatus||0)>14)s.parados++;});
+    let t='<tr><th>Status</th><th>Contatos</th><th>Parados há +14 dias</th><th>Média de dias no status</th></tr>';
+    [...W1_STATUS_ORDER,...Object.keys(byS).filter(k=>!W1_STATUS_ORDER.includes(k))].forEach(k=>{
+        const s=byS[k];if(!s)return;
+        const atencao=['analysis_scheduled','awaiting_proposal_send','proposal_sent','proposal_signed'].includes(k)&&s.parados>0;
+        t+=`<tr><td>${esc(labels[k]||k)}</td><td><b>${s.n}</b></td><td class="${atencao?'miss':''}">${s.parados}</td><td>${Math.round(s.dias/s.n)}</td></tr>`;
+    });
+    document.getElementById('w1_status').innerHTML=t;
+    // Semanas (Centro Econômico)
+    const sem=(w1.resultados?.semanas||[]);
+    const cell=(v,meta)=>`<td class="${v>=meta?'hit':(v>0?'':'miss')}">${v}</td>`;
+    let w='<tr><th>Semana</th><th>RECs</th><th>AA (8)</th><th>AF (5)</th><th>AP (1)</th><th>AP R$</th><th>RECs/AF (7)</th></tr>';
+    sem.forEach((s,i)=>{const r=s.af?s.recs/s.af:0;w+=`<tr class="${i===0?'current':''}"><td>${fmtDM(parseDate(s.inicio))}${i===0?' ◂ atual':''}</td><td>${s.recs}</td>${cell(s.aa,8)}${cell(s.af,5)}${cell(s.ap,1)}<td>${fmtBRL0(s.apValor)}</td><td class="${s.af?(r>=7?'hit':'miss'):''}">${s.af?r.toFixed(1).replace('.',','):'—'}</td></tr>`;});
+    const mes=(w1.resultados?.meses||[]);
+    if(mes.length){w+='<tr><th>Mês</th><th>RECs</th><th>AA</th><th>AF</th><th>AP</th><th>AP R$</th><th>PPs</th></tr>';
+        mes.forEach(m=>{w+=`<tr><td>${monthLabel(m.inicio.slice(0,7))}</td><td>${m.recs}</td><td>${m.aa}</td><td>${m.af}</td><td>${m.ap}</td><td>${fmtBRL0(m.apValor)}</td><td>${(m.ppsPeriodo||0).toLocaleString('pt-BR',{maximumFractionDigits:2})}</td></tr>`;});}
+    document.getElementById('w1_weeks').innerHTML=sem.length||mes.length?w:'<tr><td>Sem dados de resultados.</td></tr>';
+    // Quem mais indica
+    const rec={};cont.forEach(c=>{if(!c.indicadoPor)return;const r=rec[c.indicadoPor]=rec[c.indicadoPor]||{n:0,cli:0,ativos:0};r.n++;if(c.status==='client')r.cli++;if(!['lost','disqualified','client'].includes(c.status))r.ativos++;});
+    document.getElementById('w1_top_rec').innerHTML=Object.entries(rec).sort((a,b)=>b[1].n-a[1].n).slice(0,10).map(([nome,r])=>`<li><span><b>${esc(nome)}</b><br><span style="color:var(--text-muted);font-size:11px;">${r.cli} viraram cliente · ${r.ativos} em aberto</span></span><span class="tag tag-rec">${r.n} RECs</span></li>`).join('')||'<li>Sem indicações registradas.</li>';
+    // Assinaturas FUP
+    document.getElementById('w1_ass').innerHTML=fups.sort((a,b)=>(b.inicio||'').localeCompare(a.inicio||'')).map(s=>{
+        const plano=(s.categoria.match(/\((.*)\)/)||[])[1]||s.categoria;const ok=/ativo/i.test(s.situacao||'');
+        return `<li><span><b>${esc(s.cliente)}</b><br><span style="color:var(--text-muted);font-size:11px;">${esc(plano)} · desde ${s.inicio?fmtDM(parseDate(s.inicio)):'—'} · ${esc(s.cobranca)}</span></span><span class="tag ${ok?'tag-cli':'tag-ana'}">${esc(s.situacao)}</span></li>`;}).join('')||'<li>Nenhuma assinatura de FUP.</li>';
+    // Comissões por mês
+    let c='<tr><th>Mês</th><th>AP</th><th>FUP</th><th>Produtos</th><th>Total creditado</th><th>Saques</th></tr>';
+    Object.keys(real).sort().reverse().slice(0,12).forEach(k=>{const m=real[k];c+=`<tr class="${k===nowKey?'current':''}"><td>${monthLabel(k)}</td><td>${fmtBRL0(m.ap)}</td><td>${fmtBRL0(m.fup)}</td><td>${fmtBRL0(m.ext)}</td><td><b>${fmtBRL0(m.total)}</b></td><td>${fmtBRL0(m.saque)}</td></tr>`;});
+    document.getElementById('w1_com').innerHTML=c;
+    document.getElementById('w1_diag').innerHTML=`Versão do script: ${esc(w1.versao||'?')}<br>Contatos: ${cont.length} · Assinaturas: ${ass.length} · Lançamentos: ${(w1.comissoes||[]).length}<br>Semanas: ${sem.length} · Meses: ${mes.length}`;
+}
+function copyW1Diag(){
+    const txt=document.getElementById('w1_diag').innerText+`\nÚltima sincronização: ${w1SyncLabel()}`;
+    navigator.clipboard?.writeText(txt).then(()=>alert('Diagnóstico copiado.')).catch(()=>alert(txt));
 }
 
 // ============================================================
@@ -1375,7 +1599,10 @@ function renderReceb(){
     const cur=rv.months.find(m=>m.key===rv.nowKey);
     const fut=rv.months.filter(m=>m.key>rv.nowKey);
     document.getElementById('rv_k_mes').innerText=fmtBRL0(cur.total);
-    document.getElementById('rv_k_mes_sub').innerText=metaRenda?`${Math.round(cur.total/metaRenda*100)}% da meta`:'Defina a meta';
+    document.getElementById('rv_k_mes_sub').innerText=(rv.fonte==='w1'?`já creditado ${fmtBRL0(rv.creditadoMes)} · `:'')+(metaRenda?`${Math.round(cur.total/metaRenda*100)}% da meta`:'Defina a meta');
+    document.getElementById('rvChartNote').innerHTML=rv.fonte==='w1'
+        ? `<b>Fonte: W1nner</b> (sincronizado em ${w1SyncLabel()}). Meses passados = comissões realmente creditadas no extrato. Meses futuros = estimativa: parcelas restantes das consultorias pagas pela regra de AP (ajustada pelo que entrou no último mês, fator ${rv.calib.toFixed(2).replace('.',',')}), mais a média dos últimos 3 meses de FUP e de produtos, mais os lançamentos manuais ao lado.`
+        : 'Meses à esquerda do atual aparecem apagados (estimativa do que já caiu). Cada mês mostra o que entra na sua conta, já considerando que a W1 paga no mês seguinte ao fechamento e repassa nas mesmas parcelas do cliente. Sincronize com o W1nner para usar os valores reais.';
     document.getElementById('rv_k_prox').innerText=fmtBRL0(fut[0]?.total||0);
     document.getElementById('rv_k_media').innerText=fmtBRL0(fut.slice(0,3).reduce((s,m)=>s+m.total,0)/3);
     document.getElementById('rv_k_fup').innerText=fmtBRL0(rv.fupMensalAtual);
@@ -1523,7 +1750,7 @@ function convertLeadToClient(){
     saveData();saveLeads();
     selectedEntregasClient=clients.length-1;
     alert(`${l.nome} agora é cliente. Complete o valor da AP, parcelas e FUP em "Entregas & Produtos".`);
-    switchTab('tab-entregas',document.querySelectorAll('.nav-btn')[5]);
+    switchTab('tab-entregas',document.querySelector(".nav-btn[onclick*='tab-entregas']"));
     loadEntregasData();
 }
 function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return x;}
@@ -1544,8 +1771,13 @@ function computeWeeks(n){
     }
     return out;
 }
+function w1Weeks(n){
+    const sem=w1?.resultados?.semanas||[];
+    if(!sem.length)return null;
+    return sem.slice(0,n).map(s=>({start:parseDate(s.inicio),recs:s.recs||0,aa:s.aa||0,af:s.af||0,ap:s.ap||0}));
+}
 function renderFunil(){
-    const weeks=computeWeeks(6);
+    const weeks=w1Weeks(6)||computeWeeks(6);
     const cell=(v,meta)=>`<td class="${v>=meta?'hit':(v>0?'':'miss')}">${v}</td>`;
     let t='<tr><th>Semana</th><th>RECs</th><th>AA (8)</th><th>AF (5)</th><th>AP (1)</th><th>RECs/AF (7)</th></tr>';
     weeks.forEach((w,i)=>{
@@ -1558,7 +1790,7 @@ function renderFunil(){
     const recs=leads.filter(l=>l.origem==='rec'&&inRange(l.criado,lim,now));
     const aas=leads.filter(l=>inRange(l.dataAA,lim,now)),afs=leads.filter(l=>inRange(l.dataAF,lim,now));
     const pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
-    document.getElementById('funilConvNote').innerHTML=`Conversão nos últimos 90 dias: REC → AA <b>${pc(recs.filter(l=>l.dataAA).length,recs.length)}</b> (${recs.length} RECs) · AA → AF <b>${pc(aas.filter(l=>l.dataAF).length,aas.length)}</b> · AF → AP <b>${pc(afs.filter(l=>l.dataAP||l.etapa==='ap').length,afs.length)}</b>`;
+    document.getElementById('funilConvNote').innerHTML=(w1Weeks(1)?`<b>Semanas: números do W1nner</b> (sincronizado em ${w1SyncLabel()}). `:'')+`Conversão nos últimos 90 dias: REC → AA <b>${pc(recs.filter(l=>l.dataAA).length,recs.length)}</b> (${recs.length} RECs) · AA → AF <b>${pc(aas.filter(l=>l.dataAF).length,aas.length)}</b> · AF → AP <b>${pc(afs.filter(l=>l.dataAP||l.etapa==='ap').length,afs.length)}</b>`;
     document.getElementById('clientNamesList').innerHTML=clients.slice(1).map(c=>`<option value="${esc(c.name)}">`).join('');
     renderLeadList();
 }
