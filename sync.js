@@ -9,7 +9,7 @@
    ============================================================= */
 (function () {
   'use strict';
-  var VERSION = '2.0.0';
+  var VERSION = '2.1.0';
   var SELF = document.currentScript && document.currentScript.src;
   var CRM_URL = window.W1SYNC_CRM_URL || (SELF ? new URL('./', SELF).href : 'https://gihadazankiw1-gif.github.io/crm-gihadazanki/');
   var CRM_ORIGIN = new URL(CRM_URL).origin;
@@ -144,7 +144,7 @@
               }) : [];
               out.push({ id: id, status: txt(c[ix('Status')]), diasStatus: num(txt(c[ix('Dias no Status')])),
                 assinatura: dateBR(txt(c[ix('Data da Assinatura')])), cliente: txt(c[ix('Cliente')]),
-                parceira: txt(c[ix('Parceira')]), produto: txt(c[ix('Produto')]),
+                parceira: txt(c[ix('Parceira')]), responsavel: txt(c[ix('Responsável')]), produto: txt(c[ix('Produto')]),
                 valor: apc ? (brl(txt(apc.querySelector('.ap-installment-cell-value') || apc)) || 0) : 0,
                 parcelas: parcelas, pps: num(txt(c[ix('PPs')])) });
             });
@@ -223,7 +223,7 @@
       var seg = new Date(hoje); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
       var jobs = [];
       for (var w = 0; w < 8; w++) { var a = new Date(seg); a.setDate(a.getDate() - 7 * w); var b = new Date(a); b.setDate(b.getDate() + 6); jobs.push(['s', a, b]); }
-      for (var m = 0; m < 6; m++) { jobs.push(['m', new Date(hoje.getFullYear(), hoje.getMonth() - m, 1, 12), new Date(hoje.getFullYear(), hoje.getMonth() - m + 1, 0, 12)]); }
+      for (var m = 0; m < 12; m++) { jobs.push(['m', new Date(hoje.getFullYear(), hoje.getMonth() - m, 1, 12), new Date(hoje.getFullYear(), hoje.getMonth() - m + 1, 0, 12)]); }
       var res = { semanas: [], meses: [] }, j = 0;
       function next() {
         if (j >= jobs.length) return res;
