@@ -68,6 +68,7 @@ h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;
 .tbl td.l,.tbl th.l{text-align:left}
 .tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:#111}
 .tbl tr.sel td{background:#14120A}
+.tbl.wrap td{white-space:normal}
 .tbl tr.tot td{font-weight:800;border-top:1px solid var(--line2)}
 .scroll{overflow-x:auto}
 .tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
@@ -411,6 +412,10 @@ function normalizeW1(p){
   if(!p||!p.contratos)return null;
   ['contatos','statusReport','contratos','comissoes'].forEach(k=>p[k]=toArr(p[k]));
   p.contratos.forEach(c=>c.parcelas=toArr(c.parcelas));
+  // O W1nner mostra o plano de parcelas da AP mais recente do cliente em todas as APs dele.
+  // Mantém o plano só no contrato mais recente; nos antigos o plano fica desconhecido (usa o histórico de comissões).
+  const grupos={};p.contratos.filter(c=>/Análise Paga/i.test(c.produto)&&c.parcelas.length).forEach(c=>{const k=(c.cliente||'').toUpperCase()+'|'+JSON.stringify(c.parcelas);(grupos[k]=grupos[k]||[]).push(c);});
+  Object.values(grupos).forEach(l=>{if(l.length<2)return;l.sort((a,b)=>(b.assinatura||'').localeCompare(a.assinatura||''));l.slice(1).forEach(c=>{c.parcelas=[];c.planoOculto=true;});});
   p.resultados=p.resultados||{};p.resultados.semanas=toArr(p.resultados.semanas);p.resultados.meses=toArr(p.resultados.meses);
   return p;
 }
@@ -470,14 +475,14 @@ function cCat(c){
 // Produtos da consultoria (mesma matriz do CRM antigo). "re" reconhece o contrato do W1nner automaticamente.
 const PRODS=[
   {id:'p_seguro', n:'Seguro de Vida',          g:'vida', re:/vida|life|prudential|azos|mag seguros|mongeral|omint|icatu seguros|metlife/i},
-  {id:'p_prev',   n:'Previdência Privada',     g:'prev', re:/previd|pgbl|vgbl/i},
+  {id:'p_prev',   n:'Previdência Privada',     g:'prev', re:/previd|pgbl|vgbl|zurich aporte/i},
   {id:'p_imovel', n:'Consórcio Imobiliário',   g:'cons', re:/cons[oó]rcio/i},
   {id:'p_auto',   n:'Consórcio Automóvel',     g:'cons', re:/cons[oó]rcio.*(auto|ve[ií]cul|moto)/i},
   {id:'p_saude',  n:'Plano de Saúde',          re:/sa[uú]de|odonto/i},
   {id:'p_rc',     n:'Responsabilidade Civil',  re:/responsabilidade civil|\bRC\b|D&O/i},
   {id:'p_resid',  n:'Seguro Residencial',      re:/residencial/i},
   {id:'p_segauto',n:'Seguro Automóvel',        re:/seguro auto|autom[oó]vel/i},
-  {id:'p_invest', n:'Investimentos (W1 Capital)',re:/W1 Capital|investimento/i},
+  {id:'p_invest', n:'Investimentos (XP / FIP)',re:/Abertura de Conta|FIP|investimento/i},
   {id:'p_patrim', n:'W1 Patrimonial',          re:/patrimonial/i},
   {id:'p_business',n:'W1 Business',            re:/W1 Business/i},
 ];
@@ -521,7 +526,7 @@ function buildModel(){
   const crit={cli:cliUnicos,fup:fupOwn,pps:pps.total,prod:pps.prod,aps:apOwn.length};
   let nivelIdx=0;NIVEIS.forEach((n,i)=>{if(crit.cli>=n.cli&&crit.fup>=n.fup&&crit.pps>=n.pps&&crit.prod>=n.prod)nivelIdx=i;});
   const nivel=NIVEIS[nivelIdx].n, prox=NIVEIS[nivelIdx+1]||null;
-  const ticket=apOwn.length?sum(apOwn,apTotal)/apOwn.length:0;
+  const ticket=apOwn.length?sum(apOwn,c=>c.valor||apTotal(c))/apOwn.length:0; // valor da AP (sem juros do parcelamento)
 
   // --- lançamentos realizados por mês (AP/FUP pela referência, produtos pelo crédito)
   const lines=[];
@@ -545,7 +550,9 @@ function buildModel(){
     const info={unit,pct,fonte:ents.length?'pago':'regra',restantes:[],lastRef};
     apInfo[c.id]=info;
     if(!ents.length&&c.origem!=='proprio')return; // herdado sem histórico: incerto
-    if(ents.length&&lastRef<addM(now,-2)){info.parado=true;return;}
+    // parou de gerar comissão antes do fim do plano (à vista ou plano concluído não é "parado")
+    const faltavam=c.parcelas.some(p=>(p.data||'').slice(0,7)>lastRef);
+    if(ents.length&&lastRef<addM(now,-2)){info.parado=faltavam;info.encerrado=!faltavam;return;}
     const nova=c.origem==='proprio'&&(c.assinatura||'').slice(0,7)===now;
     if(c.parcelas.length){
       c.parcelas.filter(p=>(p.data||'').slice(0,7)>=now).forEach(p=>info.restantes.push({k:p.data.slice(0,7),n:p.n,valor:ents.length?unit:p.valor*pct}));
@@ -586,7 +593,7 @@ function buildModel(){
   // --- contratos acabando (afetam as próximas comissões)
   const fim=[];
   apC.forEach(c=>{
-    const info=apInfo[c.id];if(!info)return;
+    const info=apInfo[c.id];if(!info||info.encerrado)return;
     if(info.parado){if(info.lastRef>=addM(now,-5))fim.push({cliente:c.cliente,tipo:'AP',motivo:`Parou de pagar (última ref. ${mLabel(info.lastRef)})`,ultimo:info.lastRef,perde:addM(info.lastRef,1),valor:info.unit,status:c.status,grave:true});return;}
     if(!c.parcelas.length||(!info.unit&&c.origem!=='proprio'))return;
     const last=c.parcelas.reduce((m,p)=>(p.data||'').slice(0,7)>m?(p.data||'').slice(0,7):m,'');
@@ -632,7 +639,9 @@ function buildModel(){
     // produtos contratados detectados no W1nner
     o.auto={};o.prod.filter(c=>!INATIVO.test(c.status)).forEach(c=>{const id=prodOf(c);if(id&&id!=='outro')(o.auto[id]=o.auto[id]||[]).push(c);});
   });
-  const clientes=Object.values(cliMap).filter(o=>o.tipo!=='outro').sort((a,b)=>(b.ativo-a.ativo)||(b.receber+b.recebido12)-(a.receber+a.recebido12));
+  const eu=norm(user?.displayName||'').split(' ');
+  const souEu=n=>{const t=norm(n).split(' ');return eu.length>1&&t[0]===eu[0]&&t[t.length-1]===eu[eu.length-1];};
+  const clientes=Object.values(cliMap).filter(o=>o.tipo!=='outro'&&!souEu(o.nome)).sort((a,b)=>(b.ativo-a.ativo)||(b.receber+b.recebido12)-(a.receber+a.recebido12));
   return {now,disp:Math.round(disp*100)/100,sacado,months,lines,clientes,apInfo,pps,crit,nivel,prox,nivelIdx,ticket,apOwn,grp,fupAtivosCli,fupMensal,fim};
 }
 
@@ -700,7 +709,7 @@ function renderPainel(){
   const fupPag=Object.values(M.fupAtivosCli);
   document.getElementById('pTiles').innerHTML=
     tile('Disponível para saque',R(M.disp),'igual ao W1nner',true)+
-    tile('Ticket médio',R0(M.ticket),`${M.apOwn.length} APs próprias · ${R0(sum(M.apOwn,apTotal))} no total`)+
+    tile('Ticket médio',R0(M.ticket),`${M.apOwn.length} APs próprias · ${R0(sum(M.apOwn,c=>c.valor||apTotal(c)))} vendidos`)+
     tile('APs',`${M.crit.aps+apEst}`,`<b>${M.crit.aps}</b> próprias (${M.crit.cli} clientes) · <b>${apEst}</b> estrutura/herdadas`)+
     tile('FUPs ativos',`${fupPag.length}`,`<b>${M.crit.fup}</b> próprios · ${fupPag.length-fupPag.filter(f=>f.origem==='proprio').length} herdados · ${R0(M.fupMensal)}/mês`)+
     tile('PPs totais',N(M.pps.total,2),`produtos ${N(M.pps.prod,2)} · consultoria ${N(M.pps.w1,2)}`);
@@ -715,7 +724,7 @@ function renderPainel(){
   M.clientes.filter(c=>c.alerta).forEach(c=>al.push(`<tr><td>${esc(c.nome)}</td><td class="l"><span class="tag t-warn">Inadimplente</span> <span class="muted">${c.contratos.filter(x=>/Inadimplente/i.test(x.status)).map(x=>esc(x.produto.replace(/\s*\(.*\)/,''))).join(', ')}</span></td><td></td></tr>`));
   const pend=M.clientes.filter(c=>c.tipo==='proprio'&&consStatus(c).pend.length);
   if(pend.length)al.push(`<tr><td>Consultorias pendentes</td><td class="l muted">${pend.length} clientes com reuniões C1–C4 em aberto</td><td><button class="linkbtn" onclick="ui.cFilter='pend';goTab('clientes')">Ver</button></td></tr>`);
-  document.getElementById('pAlerts').innerHTML=al.length?`<table class="tbl">${al.join('')}</table>`:'<p class="muted">Nada pendente.</p>';
+  document.getElementById('pAlerts').innerHTML=al.length?`<table class="tbl wrap">${al.join('')}</table>`:'<p class="muted">Nada pendente.</p>';
 }
 function goTab(v){document.querySelector(`.tab[data-v="${v}"]`).click();renderClientes();}
 
