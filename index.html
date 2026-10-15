@@ -449,6 +449,9 @@ kbd{font:600 10px var(--text);border:1px solid var(--line2);border-bottom-width:
     <div style="text-align:center;margin:18px 0 6px"><a class="btn bm" id="bookmarklet" href="#" onclick="event.preventDefault();alert('Arraste este botão para a barra de favoritos.')">⭐ Sincronizar CRM</a></div>
     <p class="note">O favorito só lê dados do W1nner. Nada é alterado lá. Ele só roda se o script for exatamente a <span id="bmVer"></span> aprovada; se o CRM pedir, arraste o botão de novo.</p>
     <div id="health"></div>
+    <div class="sub-t" style="margin-top:18px">Backup</div>
+    <p class="note" style="margin-top:0">Baixa um arquivo com tudo o que está no CRM: dados do W1nner, consultorias, anotações, meta e as fichas do CRM antigo. Guarde no seu Google Drive.</p>
+    <div style="margin-top:10px"><button class="btn" onclick="baixarBackup()">Baixar backup</button> <span class="note" id="bkInfo"></span></div>
     <div style="text-align:right;margin-top:10px"><button class="pill" onclick="closeSync()">Fechar</button></div>
   </div>
 </div>
@@ -543,6 +546,16 @@ function normalizeW1(p){
   Object.values(grupos).forEach(l=>{if(l.length<2)return;l.sort((a,b)=>(b.assinatura||'').localeCompare(a.assinatura||''));l.slice(1).forEach(c=>{c.parcelas=[];c.planoOculto=true;});});
   p.resultados=p.resultados||{};p.resultados.semanas=toArr(p.resultados.semanas);p.resultados.meses=toArr(p.resultados.meses);
   return p;
+}
+async function baixarBackup(){
+  try{
+    const s=await db.ref(path('')).get();const d=s.val()||{};
+    const blob=new Blob([JSON.stringify({app:'crm-gihad-azanki',geradoEm:new Date().toISOString(),dados:d},null,1)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    const hoje=new Date().toISOString().slice(0,10);a.download=`backup-crm-${hoje}.json`;document.body.appendChild(a);a.click();a.remove();
+    await db.ref(path('settings/ultimoBackup')).set(Date.now());
+    document.getElementById('bkInfo').innerText='Backup baixado. Ele está na sua pasta Downloads.';
+  }catch(e){alert('Não consegui gerar o backup: '+e.message);}
 }
 async function saveMeta(v){meta=parseFloat(v)||0;if(user)await db.ref(path('settings/metaRenda')).set(meta);refresh();}
 
