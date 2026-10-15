@@ -9,7 +9,7 @@
    ============================================================= */
 (function () {
   'use strict';
-  var VERSION = '2.1.0';
+  var VERSION = '2.2.0';
   var SELF = document.currentScript && document.currentScript.src;
   var CRM_URL = window.W1SYNC_CRM_URL || (SELF ? new URL('./', SELF).href : 'https://gihadazankiw1-gif.github.io/crm-gihadazanki/');
   var CRM_ORIGIN = new URL(CRM_URL).origin;
@@ -128,9 +128,11 @@
           q.set('search[by_structure_type][type]', type); q.set('search[by_structure_type][consultant_id]', consultant);
           q.set('search[page_elements]', '100'); if (p > 1) q.set('page', String(p));
           return getText('/painel-consultor/propostas-de-produto/list?' + q.toString(), H_XHR).then(function (t) {
-            var d = parse(unJS(t)); var tb = d.querySelector('table'); if (!tb) return out;
+            var d = parse(unJS(t)); var tb = d.querySelector('table'); if (!tb) { if (p === 1 && !/Nenhum|nenhum/.test(t)) throw new Error('Não consegui ler a lista de contratos do W1nner. Nada foi gravado.'); return out; }
             var heads = Array.prototype.map.call(tb.querySelectorAll('thead th'), txt);
             var ix = function (h) { return heads.indexOf(h); };
+            var faltam = ['ID', 'Status', 'Data da Assinatura', 'Cliente', 'Parceira', 'Produto', 'AP / Parcelas', 'PPs'].filter(function (h) { return ix(h) < 0; });
+            if (faltam.length) throw new Error('O W1nner mudou a tela de contratos (não achei: ' + faltam.join(', ') + '). Nada foi gravado.');
             var novos = 0;
             Array.prototype.forEach.call(tb.querySelectorAll('tbody > tr'), function (tr) {
               var c = tr.children; if (c.length < heads.length - 1) return;
@@ -173,6 +175,7 @@
         var id = idFrom(a.getAttribute('href'), /company_id=(\d+)/);
         if (id && !ids.some(function (x) { return x.id === id; })) ids.push({ id: id, empresa: txt(a) });
       });
+      if (!ids.length) throw new Error('Não achei as empresas em Minhas Comissões. Nada foi gravado.');
       var out = [], ci = 0;
       function company() {
         if (ci >= ids.length) return out;
@@ -189,8 +192,9 @@
               out.push({ id: id, empresaId: co.id, empresa: co.empresa, data: dateBR(txt(c[1])), tipo: txt(c[2]),
                 produto: txt(c[3]), contato: txt(c[4]), parcela: txt(c[5]), valor: valor, obs: txt(c[c.length - 1]) });
             });
+            if (p === 1 && !d.querySelector('table')) throw new Error('Não consegui ler as comissões de ' + co.empresa + '. Nada foi gravado.');
             return (novos > 0 && p < 80) ? page(p + 1) : null;
-          }).catch(function () { return null; });
+          }, function (e) { throw new Error('Falha ao ler as comissões de ' + co.empresa + ' (página ' + p + '). Nada foi gravado. Tente de novo.'); });
         }
         return page(1).then(company);
       }
@@ -228,10 +232,22 @@
       function next() {
         if (j >= jobs.length) return res;
         var job = jobs[j++]; msg('Resultados: ' + j + ' de ' + jobs.length, 82 + Math.round(j / jobs.length * 13));
-        return period(job[1], job[2]).then(function (o) { if (o) (job[0] === 's' ? res.semanas : res.meses).push(o); }).then(next);
+        return period(job[1], job[2]).then(function (o) { if (o) (job[0] === 's' ? res.semanas : res.meses).push(o); else res.falhas = (res.falhas || 0) + 1; }).then(next);
       }
       return next();
     }).catch(function () { return { semanas: [], meses: [] }; });
+  }
+
+  // ---------- conferência antes de enviar ----------
+  function conferir(p) {
+    var semValor = p.comissoes.filter(function (e) { return e.valor == null || !e.data; }).length;
+    if (p.comissoes.length && semValor / p.comissoes.length > 0.05) throw new Error('O W1nner mudou a tela de comissões (' + semValor + ' lançamentos sem valor ou data). Nada foi gravado.');
+    var proprios = p.contratos.filter(function (c) { return c.origem === 'proprio'; });
+    var pps = proprios.reduce(function (s, c) { return s + (c.pps || 0); }, 0);
+    p.conferencia = { ppsContratos: Math.round(pps * 10000) / 10000, ppsW1nner: (p.dashboard || {}).ppsHistoricos || 0,
+      contratosProprios: proprios.length, contratosW1nner: (p.dashboard || {}).contratos || 0, comissoesSemValor: semValor,
+      resultadosFalhas: (p.resultados || {}).falhas || 0 };
+    return p;
   }
 
   // ---------- envio para o CRM ----------
@@ -262,7 +278,7 @@
       .then(function (x) { payload.statusReport = x; return getContracts(payload.consultorId); })
       .then(function (x) { payload.contratos = x; return getCommissions(); })
       .then(function (x) { payload.comissoes = x; return getResults(payload.consultorId); })
-      .then(function (x) { payload.resultados = x; return payload; });
+      .then(function (x) { payload.resultados = x; return conferir(payload); });
   };
   if (TEST) { window.__w1syncRunning = false; return; }
   if (!popup) { finish('O navegador bloqueou a janela do CRM. Permita pop-ups para o W1nner e clique no favorito de novo.', false); return; }

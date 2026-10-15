@@ -294,7 +294,11 @@ h2{font:600 10px/1.3 var(--text);text-transform:uppercase;letter-spacing:.22em;c
 .btn-g{background:var(--marfim);color:var(--tinta)}
 .bm{cursor:grab}
 .modal{position:fixed;inset:0;background:rgba(6,13,23,.66);z-index:200;display:flex;align-items:center;justify-content:center}
-.modal .card{max-width:520px;width:92%;padding:22px}
+.modal .card{max-width:560px;width:92%;padding:22px;max-height:90vh;overflow:auto}
+.hc{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line2);color:var(--ink)}
+.hc i{flex:none;width:18px;height:18px;border-radius:50%;font:700 11px/18px var(--text);text-align:center;font-style:normal;background:var(--tg-s);color:var(--tg-s-t)}
+.hc.bad i{background:var(--tg-r);color:var(--neg)}
+.alertbar{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--tg-r);border:1px solid var(--neg);color:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13px}
 .steps{text-align:left;color:var(--ink2);font-size:13px;line-height:1.8;padding-left:18px}
 .loading{position:fixed;inset:0;background:var(--tinta);z-index:300;display:flex;align-items:center;justify-content:center;color:var(--nevoa);font:600 11px var(--text);letter-spacing:.3em;text-transform:uppercase}
 .meta-input{width:110px;background:transparent;border:none;border-bottom:1.5px solid var(--gold);color:var(--ink);font:600 26px var(--display);outline:none;font-variant-numeric:tabular-nums}
@@ -360,6 +364,7 @@ kbd{font:600 10px var(--text);border:1px solid var(--line2);border-bottom-width:
   </header>
 
   <main>
+    <div id="healthBar"></div>
     <section id="empty" class="hidden">
       <div class="center"><div class="box card">
         <div class="eb">Primeiro acesso</div><h1>Conecte o W1nner</h1>
@@ -442,7 +447,8 @@ kbd{font:600 10px var(--text);border:1px solid var(--line2);border-bottom-width:
       <li>O CRM abre numa janela e se atualiza sozinho em cerca de 30 segundos.</li>
     </ol>
     <div style="text-align:center;margin:18px 0 6px"><a class="btn bm" id="bookmarklet" href="#" onclick="event.preventDefault();alert('Arraste este botão para a barra de favoritos.')">⭐ Sincronizar CRM</a></div>
-    <p class="note">O favorito só lê dados do W1nner. Nada é alterado lá.</p>
+    <p class="note">O favorito só lê dados do W1nner. Nada é alterado lá. Ele só roda se o script for exatamente a <span id="bmVer"></span> aprovada; se o CRM pedir, arraste o botão de novo.</p>
+    <div id="health"></div>
     <div style="text-align:right;margin-top:10px"><button class="pill" onclick="closeSync()">Fechar</button></div>
   </div>
 </div>
@@ -463,7 +469,7 @@ firebase.initializeApp({
 });
 const db=firebase.database(), auth=firebase.auth();
 const W1_ORIGIN='https://w1nner.w1consultoria.com.br';
-let user=null, w1=null, meta=6000, M=null, ready=false;
+let rawW1=null, user=null, w1=null, meta=6000, M=null, ready=false;
 let consult={}, oldFichas=[]; // consultorias (manual) e fichas do CRM antigo
 const ui={view:'painel', mes:null, det:false, tbl:false, hist:false, cFilter:'proprio', cOpen:null, pen:'proprio', conv:3};
 const path=p=>`users/${user.uid}/${p}`;
@@ -479,10 +485,12 @@ auth.onAuthStateChanged(async u=>{
   document.getElementById('app').classList.remove('hidden');
   try{
     const s=await db.ref(path('')).get();const d=s.val()||{};
-    w1=normalizeW1(d.w1nner);if(d.settings?.metaRenda)meta=d.settings.metaRenda;
+    rawW1=d.w1nner||null;w1=normalizeW1(JSON.parse(JSON.stringify(d.w1nner||null)));if(d.settings?.metaRenda)meta=d.settings.metaRenda;
     consult=d.consultorias||{};
     oldFichas=toArr(d.clients).slice(1).filter(c=>c&&c.name);
-  }catch(e){console.error(e);}
+  }catch(e){console.error(e);
+    if(/permission/i.test(e.message||'')){document.getElementById('app').innerHTML=`<main><div class="center"><div class="box card"><div class="eb">Acesso negado</div><h1>Esta conta não tem acesso</h1><p class="sub" style="margin:14px auto 22px">Você entrou como ${esc(u.email||'')}. Este CRM só abre com a conta do Gihad.</p><button class="btn" onclick="logout()">Sair e trocar de conta</button></div></div></main>`;return;}
+  }
   ready=true;initReceiver();buildBookmarklet();refresh();
 });
 
@@ -497,17 +505,30 @@ function initReceiver(){
     if(e.data.type!=='w1nner-sync')return;
     try{
       const p=JSON.parse(JSON.stringify(e.data.payload||{}));
-      if(!Array.isArray(p.contatos)||!Array.isArray(p.comissoes)||!Array.isArray(p.contratos))throw new Error('Dados incompletos. Atualize o favorito (script v2).');
-      await db.ref(path('w1nner')).set(p);
+      if(!Array.isArray(p.contatos)||!Array.isArray(p.comissoes)||!Array.isArray(p.contratos))throw new Error('Dados incompletos. Atualize o favorito no CRM.');
+      if(p.versao!==SYNC_VERSION)throw new Error(`Favorito desatualizado (versão ${p.versao||'antiga'}). Abra o CRM, clique em Sincronizar e arraste o botão de novo para a barra de favoritos.`);
+      // proteção contra sincronização incompleta: o histórico de comissões só cresce
+      if(w1){
+        const a=w1.comissoes.length,b=p.comissoes.length,ca=w1.contratos.length,cb=p.contratos.length;
+        if(b<a*0.98)throw new Error(`A leitura veio incompleta (${b} lançamentos de comissão, antes eram ${a}). Nada foi gravado. Tente de novo.`);
+        if(cb<ca*0.9)throw new Error(`A leitura veio incompleta (${cb} contratos, antes eram ${ca}). Nada foi gravado. Tente de novo.`);
+        await db.ref(path('w1nner_anterior')).set(JSON.parse(JSON.stringify(rawW1||{})));
+      }
+      await db.ref(path('w1nner')).set(p);rawW1=JSON.parse(JSON.stringify(p));
       w1=normalizeW1(p);refresh();
       reply({type:'crm-saved',resumo:`${p.contratos.length} contratos, ${p.contatos.length} contatos e ${p.comissoes.length} lançamentos.`});
     }catch(err){console.error(err);reply({type:'crm-error',message:err.message});}
   });
   if(location.hash==='#w1sync'&&window.opener){try{window.opener.postMessage({type:'crm-ready'},W1_ORIGIN);}catch(_){}}
 }
+// O favorito só executa o sync.js se ele for exatamente a versão aprovada (verificação de integridade).
+// Se alguém alterar o sync.js no GitHub, o navegador se recusa a rodar e avisa.
+const SYNC_VERSION='2.2.0';
+const SYNC_SRI='sha384-MX2nPOV25Q+NJF6XZF+bzqlhrX6Ib8sbitJ+tHgoesd086SKP2XNBDwPDj7IOiYW';
 function buildBookmarklet(){
   const src=new URL('sync.js',location.href).href;
-  document.getElementById('bookmarklet').setAttribute('href',`javascript:(function(){var s=document.createElement('script');s.src='${src}?v='+Date.now();document.body.appendChild(s);})();`);
+  document.getElementById('bookmarklet').setAttribute('href',`javascript:(function(){var s=document.createElement('script');s.src='${src}?v='+Date.now();s.integrity='${SYNC_SRI}';s.crossOrigin='anonymous';s.onerror=function(){alert('O script de sincronização não passou na verificação de segurança ou não carregou. Se você acabou de atualizar o CRM, espere 10 minutos. Depois abra o CRM, clique em Sincronizar e arraste o botão de novo para a barra de favoritos.');};document.body.appendChild(s);})();`);
+  document.getElementById('bmVer').innerText=`versão ${SYNC_VERSION}`;
 }
 function openSync(){document.getElementById('syncModal').classList.remove('hidden');}
 function closeSync(){document.getElementById('syncModal').classList.add('hidden');}
@@ -791,7 +812,29 @@ function refresh(){
   if(!has)return;
   M=buildModel();
   if(!ui.mes)ui.mes=addM(M.now,-1);
-  renderTicker();renderPainel();renderReceb();renderClientes();renderCarreira();
+  renderTicker();renderPainel();renderReceb();renderClientes();renderCarreira();renderSaude();
+}
+// ---------- conferência dos dados (a cada sincronização)
+function saude(){
+  const ck=[],cf=w1.conferencia||{};
+  const dias=(Date.now()-new Date(w1.sincronizadoEm))/864e5;
+  ck.push({ok:dias<=7,t:dias<=7?`Sincronizado ${syncAgo()}`:`Última sincronização ${syncAgo()}: os números podem estar desatualizados`});
+  ck.push({ok:w1.versao===SYNC_VERSION,t:w1.versao===SYNC_VERSION?`Favorito na versão ${SYNC_VERSION}`:`Dados lidos pelo favorito ${w1.versao||'antigo'}. Arraste o botão novo e sincronize`});
+  const ppsW=(w1.dashboard||{}).ppsHistoricos||cf.ppsW1nner||0,dif=Math.abs(M.pps.total-ppsW);
+  ck.push({ok:!ppsW||dif<0.5,t:!ppsW?'PPs: o W1nner não informou o total para comparar':dif<0.5?`PPs batem com o W1nner (${N(ppsW,2)})`:`PPs não batem: contratos somam ${N(M.pps.total,2)}, W1nner mostra ${N(ppsW,2)}`});
+  const semV=w1.comissoes.filter(e=>e.valor==null||!e.data).length;
+  ck.push({ok:!semV,t:semV?`${semV} lançamentos de comissão sem valor ou data`:`${w1.comissoes.length} lançamentos de comissão lidos completos`});
+  const semRef=w1.comissoes.filter(e=>{const c=eCat(e);return (c==='ap'||c==='fup')&&!eRef(e);}).length;
+  ck.push({ok:!semRef,t:semRef?`${semRef} comissões de AP/FUP sem mês de referência (entram pelo mês do crédito)`:'Todas as comissões de AP e FUP têm mês de referência'});
+  const nm=(w1.resultados.meses||[]).length,fr=(w1.resultados||{}).falhas||0;
+  ck.push({ok:nm>=12&&!fr,t:nm>=12&&!fr?'Resultados dos últimos 12 meses completos':`Resultados incompletos (${nm} de 12 meses${fr?`, ${fr} períodos falharam`:''})`});
+  return ck;
+}
+function renderSaude(){
+  const ck=saude(),bad=ck.filter(c=>!c.ok);
+  document.getElementById('health').innerHTML=`<div class="sub-t" style="margin-top:18px">Conferência dos dados</div>${ck.map(c=>`<div class="hc ${c.ok?'ok':'bad'}"><i>${c.ok?'✓':'!'}</i>${esc(c.t)}</div>`).join('')}<p class="note">Regras de comissão usadas: AP pela faixa de faturamento × FQ (vigente desde 01/08/2026), FUP 50% e Plano de Desenvolvimento 2026. Se a W1 mudar alguma regra, avise para atualizar.</p>`;
+  document.getElementById('healthBar').innerHTML=bad.length?`<div class="alertbar"><span><b>Conferência dos dados:</b> ${bad.length===1?esc(bad[0].t):`${bad.length} pontos de atenção`}</span><button class="linkbtn" onclick="openSync()">Ver</button></div>`:'';
+  document.getElementById('syncPill').classList.toggle('old',bad.length>0);
 }
 const syncAgo=()=>{if(!w1?.sincronizadoEm)return'';const m=Math.round((Date.now()-new Date(w1.sincronizadoEm))/6e4);return m<1?'agora':m<60?`há ${m} min`:m<48*60?`há ${Math.round(m/60)} h`:`há ${Math.round(m/1440)} dias`;};
 document.getElementById('tabs').addEventListener('click',e=>{
@@ -1044,7 +1087,7 @@ function renderClientes(){
     const dots=c.tipo==='produtos'?'<span class="muted">—</span>':`<span class="dots">${MEETS.map(m=>{const s=cs2.c[m.k]?.s;return `<i class="${meetDone(s)?'on':s==='Agendada'?'ag':''}" title="${m.n} · ${m.d}: ${esc(s||'A fazer')}">${m.n.slice(1)}</i>`;}).join('')}</span>`;
     const pcs=PRODS.filter(p=>cs2.prods[p.id]==='Contratado'||cs2.prods[p.id]==='Potencial').map(p=>`<span class="pc ${cs2.prods[p.id]==='Contratado'?'c':'p'}" title="${cs2.prods[p.id]}">${esc(p.n.replace(/ \(.*\)/,'').replace('Consórcio','Cons.').replace('Seguro','Seg.'))}</span>`).join('');
     const open=ui.cOpen===c.k;
-    t+=`<tr class="click${open?' sel':''}" onclick="toggleCli('${esc(c.k).replace(/'/g,"\\'")}')"><td>${esc(c.nome)}${c.alerta?' <span class="tag t-warn">Inadimplente</span>':''}${!c.ativo?' <span class="tag t-mute">Inativo</span>':''}</td><td class="l">${tipoTag[c.tipo]}</td><td class="l">${apTxt}</td><td class="l">${fupTxt}</td><td class="l">${dots}</td><td class="l"><div class="pchips">${pcs||'<span class="muted">—</span>'}</div></td><td><b>${c.receber?R0(c.receber):'—'}</b></td></tr>`;
+    t+=`<tr class="click${open?' sel':''}" data-k="${esc(c.k)}" onclick="toggleCli(this.dataset.k)"><td>${esc(c.nome)}${c.alerta?' <span class="tag t-warn">Inadimplente</span>':''}${!c.ativo?' <span class="tag t-mute">Inativo</span>':''}</td><td class="l">${tipoTag[c.tipo]}</td><td class="l">${apTxt}</td><td class="l">${fupTxt}</td><td class="l">${dots}</td><td class="l"><div class="pchips">${pcs||'<span class="muted">—</span>'}</div></td><td><b>${c.receber?R0(c.receber):'—'}</b></td></tr>`;
     if(open)t+=`<tr class="det"><td colspan="7">${clienteDetalhe(c)}</td></tr>`;
   });
   if(!list.length)t+='<tr><td colspan="7" class="muted">Nenhum cliente nesta visão.</td></tr>';
@@ -1068,13 +1111,13 @@ function clienteDetalhe(c){
 // ---------- Consultoria (manual)
 function consEditor(c){
   const {c:cs,prods}=consStatus(c);const key=fbKey(c.nome);
-  const meets=c.tipo==='produtos'?'':`<div><div class="sub-t">Reuniões de consultoria</div><div class="meet">${MEETS.map(m=>{const v=cs[m.k]||{};return `<div class="m${meetDone(v.s)?' done':''}"><h4>${m.n}<span>${m.d}</span></h4><select class="fld" onchange="setCons('${key}','${m.k}','s',this.value)">${MEET_ST.map(s=>`<option${(v.s||'')===s?' selected':''} value="${s}">${s||'A fazer'}</option>`).join('')}</select><input class="fld" type="date" value="${esc(v.d||'')}" onchange="setCons('${key}','${m.k}','d',this.value)" title="Data da reunião"></div>`;}).join('')}</div>
-    <div class="sub-t" style="margin-top:14px">Anotações</div><textarea class="fld" rows="4" placeholder="Pontos da reunião, próximos passos…" onchange="setCons('${key}','notas',null,this.value)">${esc(cs.notas||'')}</textarea></div>`;
-  const grid=`<div><div class="sub-t">Produtos · potencial e contratados <span id="sv-${key}" class="saved"></span></div><div class="pgrid">${PRODS.map(p=>{
+  const meets=c.tipo==='produtos'?'':`<div><div class="sub-t">Reuniões de consultoria</div><div class="meet">${MEETS.map(m=>{const v=cs[m.k]||{};return `<div class="m${meetDone(v.s)?' done':''}"><h4>${m.n}<span>${m.d}</span></h4><select class="fld" onchange="setCons(this.closest('.cons').dataset.k,'${m.k}','s',this.value)">${MEET_ST.map(s=>`<option${(v.s||'')===s?' selected':''} value="${s}">${s||'A fazer'}</option>`).join('')}</select><input class="fld" type="date" value="${esc(v.d||'')}" onchange="setCons(this.closest('.cons').dataset.k,'${m.k}','d',this.value)" title="Data da reunião"></div>`;}).join('')}</div>
+    <div class="sub-t" style="margin-top:14px">Anotações</div><textarea class="fld" rows="4" placeholder="Pontos da reunião, próximos passos…" onchange="setCons(this.closest('.cons').dataset.k,'notas',null,this.value)">${esc(cs.notas||'')}</textarea></div>`;
+  const grid=`<div><div class="sub-t">Produtos · potencial e contratados <span class="saved"></span></div><div class="pgrid">${PRODS.map(p=>{
     const auto=c.auto[p.id];const man=cs.prods?.[p.id]||{};const s=prods[p.id];
-    return `<div class="pi ${s==='Contratado'?'c':s==='Potencial'?'p':''}"><span>${esc(p.n)}</span>${auto?`<span class="auto" title="${esc(auto.map(x=>x.produto).join(', '))}">Contratado · W1nner</span>`:`<select class="fld" onchange="setCons('${key}','prods','${p.id}',{s:this.value,v:this.nextElementSibling.value})">${['','Potencial','Contratado','Não tem interesse'].map(o=>`<option${(man.s||'')===o?' selected':''} value="${o}">${o||'—'}</option>`).join('')}</select><input class="fld" type="number" step="100" placeholder="R$" value="${esc(man.v||'')}" onchange="setCons('${key}','prods','${p.id}',{s:this.previousElementSibling.value,v:this.value})">`}</div>`;}).join('')}</div>
+    return `<div class="pi ${s==='Contratado'?'c':s==='Potencial'?'p':''}"><span>${esc(p.n)}</span>${auto?`<span class="auto" title="${esc(auto.map(x=>x.produto).join(', '))}">Contratado · W1nner</span>`:`<select class="fld" onchange="setCons(this.closest('.cons').dataset.k,'prods','${p.id}',{s:this.value,v:this.nextElementSibling.value})">${['','Potencial','Contratado','Não tem interesse'].map(o=>`<option${(man.s||'')===o?' selected':''} value="${o}">${o||'—'}</option>`).join('')}</select><input class="fld" type="number" step="100" placeholder="R$" value="${esc(man.v||'')}" onchange="setCons(this.closest('.cons').dataset.k,'prods','${p.id}',{s:this.previousElementSibling.value,v:this.value})">`}</div>`;}).join('')}</div>
     <p class="note">Produtos com contrato ativo no W1nner aparecem como contratados sozinhos. Marque os potenciais conforme as reuniões.${cs.importado?` Dados trazidos do CRM antigo (${esc(cs.importado)}).`:''}</p></div>`;
-  return `<div class="cons">${meets}${grid}</div>`;
+  return `<div class="cons" data-k="${esc(key)}">${meets}${grid}</div>`;
 }
 async function setCons(key,campo,sub,val){
   const cli=M.clientes.find(c=>fbKey(c.nome)===key);
@@ -1084,7 +1127,7 @@ async function setCons(key,campo,sub,val){
   else{rec[campo]=rec[campo]||{};rec[campo][sub]=val;}
   rec.nome=cli?cli.nome:key;rec.atualizado=new Date().toISOString();
   consult[key]=rec;
-  try{await db.ref(path('consultorias/'+key)).set(rec);const el=document.getElementById('sv-'+key);if(el){el.innerText='✓ salvo';setTimeout(()=>{if(el)el.innerText='';},2000);}}catch(e){alert('Não consegui salvar: '+e.message);}
+  try{await db.ref(path('consultorias/'+key)).set(rec);const el=[...document.querySelectorAll('.cons')].find(x=>x.dataset.k===key)?.querySelector('.saved');if(el){el.innerText='✓ salvo';setTimeout(()=>{if(el)el.innerText='';},2000);}}catch(e){alert('Não consegui salvar: '+e.message);}
   renderPainel();renderClientes();
 }
 
