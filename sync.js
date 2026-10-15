@@ -9,7 +9,7 @@
    ============================================================= */
 (function () {
   'use strict';
-  var VERSION = '2.2.0';
+  var VERSION = '2.2.1';
   var SELF = document.currentScript && document.currentScript.src;
   var CRM_URL = window.W1SYNC_CRM_URL || (SELF ? new URL('./', SELF).href : 'https://gihadazankiw1-gif.github.io/crm-gihadazanki/');
   var CRM_ORIGIN = new URL(CRM_URL).origin;
@@ -192,7 +192,7 @@
               out.push({ id: id, empresaId: co.id, empresa: co.empresa, data: dateBR(txt(c[1])), tipo: txt(c[2]),
                 produto: txt(c[3]), contato: txt(c[4]), parcela: txt(c[5]), valor: valor, obs: txt(c[c.length - 1]) });
             });
-            if (p === 1 && !d.querySelector('table')) throw new Error('Não consegui ler as comissões de ' + co.empresa + '. Nada foi gravado.');
+            // empresa sem lançamentos: a página vem sem tabela, o que é normal
             return (novos > 0 && p < 80) ? page(p + 1) : null;
           }, function (e) { throw new Error('Falha ao ler as comissões de ' + co.empresa + ' (página ' + p + '). Nada foi gravado. Tente de novo.'); });
         }

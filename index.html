@@ -526,8 +526,8 @@ function initReceiver(){
 }
 // O favorito só executa o sync.js se ele for exatamente a versão aprovada (verificação de integridade).
 // Se alguém alterar o sync.js no GitHub, o navegador se recusa a rodar e avisa.
-const SYNC_VERSION='2.2.0';
-const SYNC_SRI='sha384-MX2nPOV25Q+NJF6XZF+bzqlhrX6Ib8sbitJ+tHgoesd086SKP2XNBDwPDj7IOiYW';
+const SYNC_VERSION='2.2.1';
+const SYNC_SRI='sha384-gfDejNNNGvDPYrAlOEQ7MxjqFCBmDyifvVqXcAssP4/BvkNi5pWv60ZufGGPoUg6';
 function buildBookmarklet(){
   const src=new URL('sync.js',location.href).href;
   document.getElementById('bookmarklet').setAttribute('href',`javascript:(function(){var s=document.createElement('script');s.src='${src}?v='+Date.now();s.integrity='${SYNC_SRI}';s.crossOrigin='anonymous';s.onerror=function(){alert('O script de sincronização não passou na verificação de segurança ou não carregou. Se você acabou de atualizar o CRM, espere 10 minutos. Depois abra o CRM, clique em Sincronizar e arraste o botão de novo para a barra de favoritos.');};document.body.appendChild(s);})();`);
