@@ -1008,7 +1008,7 @@ function renderConv(){
     <div class="ph" style="border-top:1px solid var(--line)"><h2>Últimas semanas</h2><span class="src">Metas: 8 AA · 5 AF · 1 AP · 7 RECs por AF</span></div><div class="scroll"><table class="tbl"><tr><th>Semana</th><th>RECs</th><th>AA</th><th>AF</th><th>AP</th><th>RECs/AF</th></tr>${(w1.resultados.semanas||[]).map((s,i)=>`<tr><td>${dm(s.inicio)}${i===0?' <span class="muted">· atual</span>':''}</td><td>${s.recs}</td><td class="${s.aa>=8?'ok':''}">${s.aa}</td><td class="${s.af>=5?'ok':''}">${s.af}</td><td class="${s.ap>=1?'ok':''}">${s.ap}</td><td class="${s.af?(s.recs/s.af>=7?'ok':'bad'):''}">${s.af?N(s.recs/s.af,1):'—'}</td></tr>`).join('')}</table></div>`:'';
 }
 function careerBars(alvo){
-  const items=[['Clientes com AP própria',M.crit.cli,alvo.cli,0],['Acompanhamentos ativos',M.crit.fup,alvo.fup,0],['PPs totais',M.crit.pps,alvo.pps,2],['PPs de produtos',M.crit.prod,alvo.prod,2]];
+  const items=[[`Clientes únicos <span class="muted">(${M.crit.aps} APs; quem tem 2 APs conta 1 vez)</span>`,M.crit.cli,alvo.cli,0],['Acompanhamentos ativos',M.crit.fup,alvo.fup,0],['PPs totais',M.crit.pps,alvo.pps,2],['PPs de produtos',M.crit.prod,alvo.prod,2]];
   return items.map(([l,v,t,d])=>{const p=t?Math.min(v/t*100,100):100;const falta=Math.max(t-v,0);
     return `<div class="bar-row"><div class="top-l"><span>${l}</span><span class="num">${N(v,d)} / ${N(t,d)}${falta>0?` <span class="muted">· faltam ${N(falta,d)}</span>`:' <span class="ok">✓</span>'}</span></div><div class="bar${p>=100?' done':''}"><div style="width:${p}%"></div></div></div>`;}).join('');
 }
