@@ -602,6 +602,9 @@ const NIVEIS=[
   {n:'FA IV', cli:32,fup:24,pps:1600,prod:400},
 ];
 const INATIVO=/Deletado|Nunca Ativo|Cancelado|Report/i;
+// AP recém-fechada aparece no W1nner como "Report / Proposta Criada" até ser processada: conta como AP fechada
+const INATIVO_AP=/Deletado|Nunca Ativo|Cancelado/i;
+const inat=c=>(cCat(c)==='ap'?INATIVO_AP:INATIVO).test(c.status||'');
 const SEM_EFEITO=/Deletado|Nunca Ativo/i;
 function cCat(c){
   if(/Análise Paga/i.test(c.produto))return'ap';
@@ -655,7 +658,7 @@ function buildModel(){
   // --- saldo
   let disp=0,sacado=0;E.forEach(e=>{disp+=eVal(e);if(eCat(e)==='saque')sacado+=Math.abs(e.valor);});
   // --- APs próprias (fechadas por você desde out/25) e PPs
-  const apOwn=C.filter(c=>isOwnAP(c)&&!INATIVO.test(c.status));
+  const apOwn=C.filter(c=>isOwnAP(c)&&!inat(c));
   const own=C.filter(c=>c.origem==='proprio');
   const pps={total:0,w1:0,prod:0,bu:0,porParceira:{}};
   own.forEach(c=>{const k=cCat(c);pps.total+=c.pps||0;if(k==='ap'||k==='fup'||k==='w1')pps.w1+=c.pps||0;else if(k==='bu')pps.bu+=c.pps||0;else pps.prod+=c.pps||0;pps.porParceira[c.parceira]=(pps.porParceira[c.parceira]||0)+(c.pps||0);});
@@ -673,7 +676,7 @@ function buildModel(){
 
   // --- AP a receber
   const apE={};E.filter(e=>eCat(e)==='ap').forEach(e=>{(apE[norm(e.contato)]=apE[norm(e.contato)]||[]).push(e);});
-  const apC=C.filter(c=>cCat(c)==='ap'&&!INATIVO.test(c.status));
+  const apC=C.filter(c=>cCat(c)==='ap'&&!inat(c));
   const grp={};apC.filter(c=>c.origem==='proprio').forEach(c=>{const k=(c.assinatura||'').slice(0,7);const g=grp[k]=grp[k]||{t:0,n:0,list:[]};g.t+=apTotal(c);g.n++;g.list.push(c);});
   const byCli={};apC.forEach(c=>(byCli[norm(c.cliente)]=byCli[norm(c.cliente)]||[]).push(c));
   Object.values(byCli).forEach(l=>l.sort((a,b)=>(a.assinatura||'').localeCompare(b.assinatura||'')));
@@ -764,18 +767,18 @@ function buildModel(){
     o.recebido12=sum(myLines.filter(l=>l.real&&l.k>=doze),l=>l.valor);
     o.receber=sum(myLines.filter(l=>!l.real),l=>l.valor);
     o.ap=o.contratos.filter(c=>cCat(c)==='ap'&&!SEM_EFEITO.test(c.status));
-    o.apProprias=o.ap.filter(c=>isOwnAP(c)&&!INATIVO.test(c.status));
+    o.apProprias=o.ap.filter(c=>isOwnAP(c)&&!inat(c));
     o.fup=o.contratos.filter(c=>cCat(c)==='fup');
     o.prod=o.contratos.filter(c=>prodOf(c)&&!SEM_EFEITO.test(c.status));
     o.fupAtivo=fupAtivosCli[k]||null;
     const pagouAP=myLines.some(l=>l.real&&(l.tipo==='ap'||l.tipo==='fup'));
     o.tipo=o.apProprias.length?'proprio':(o.ap.length||pagouAP)?'estrutura':(o.prod.length||myLines.length)?'produtos':'outro';
     o.recente=myLines.some(l=>l.real&&l.k>=addM(now,-2));
-    o.ativo=o.tipo==='proprio'?true:o.tipo==='estrutura'?(o.ap.some(c=>!INATIVO.test(c.status))&&o.recente||o.recente):o.prod.some(c=>!INATIVO.test(c.status))||o.recente;
+    o.ativo=o.tipo==='proprio'?true:o.tipo==='estrutura'?(o.ap.some(c=>!inat(c))&&o.recente||o.recente):o.prod.some(c=>!inat(c))||o.recente;
     o.alerta=o.contratos.some(c=>/Inadimplente/i.test(c.status));
     o.pps=sum(o.contratos.filter(c=>c.origem==='proprio'),c=>c.pps||0);
     // produtos contratados detectados no W1nner
-    o.auto={};o.prod.filter(c=>!INATIVO.test(c.status)).forEach(c=>{const id=prodOf(c);if(id&&id!=='outro')(o.auto[id]=o.auto[id]||[]).push(c);});
+    o.auto={};o.prod.filter(c=>!inat(c)).forEach(c=>{const id=prodOf(c);if(id&&id!=='outro')(o.auto[id]=o.auto[id]||[]).push(c);});
   });
   const eu=norm(user?.displayName||'').split(' ');
   const souEu=n=>{const t=norm(n).split(' ');return eu.length>1&&t[0]===eu[0]&&t[t.length-1]===eu[eu.length-1];};
@@ -913,15 +916,15 @@ function renderPainel(){
   document.getElementById('pStamp').innerHTML=`Fonte <b>W1nner</b><br>${syncLabel()} · <kbd>H</kbd> oculta valores · <kbd>T</kbd> tema`;
   renderHero();
   const est=M.clientes.filter(c=>c.tipo==='estrutura');
-  const apEst=sum(est,c=>c.ap.filter(x=>!INATIVO.test(x.status)).length);
+  const apEst=sum(est,c=>c.ap.filter(x=>!inat(x)).length);
   const fupPag=Object.values(M.fupAtivosCli);
   const ms=mesesRes();
   const past=M.months.filter(m=>m.k<M.now);
   document.getElementById('pTiles').innerHTML=
     tile('Disponível para saque',R(M.disp),`já sacado ${R0(M.sacado)}`,true,spark(past.map(m=>m.total),{color:'var(--ouro)'}))+
     tile('Ticket médio',R0(M.ticket),`${M.apOwn.length} APs próprias · ${R0(sum(M.apOwn,c=>c.valor||apTotal(c)))} vendidos`,false,spark(M.apOwn.slice().sort((a,b)=>(a.assinatura||'').localeCompare(b.assinatura||'')).map(c=>c.valor||apTotal(c)),{type:'bar',color:'var(--s-ap)'}))+
-    tile(`APs <span class="muted">12m</span>`,`${M.crit.aps+apEst}`,`<b>${M.crit.aps}</b> próprias (${M.crit.cli} clientes) · <b>${apEst}</b> estrutura`,false,spark(ms.map(m=>m.ap),{type:'bar',color:'var(--s-ap)',mark:ms.length-1}))+
-    tile(`FUPs ativos ${delta(mOf(addM(M.now,-1)).fup,mOf(addM(M.now,-2)).fup)}`,`${fupPag.length}`,`<b>${M.crit.fup}</b> próprios · ${fupPag.length-fupPag.filter(f=>f.origem==='proprio').length} herdados · ${R0(M.fupMensal)}/mês`,false,spark(past.map(m=>m.fup),{color:'var(--s-fup)'}))+
+    tile(`APs próprias <span class="muted">12m</span>`,`${M.crit.aps}`,`em <b>${M.crit.cli}</b> clientes (quem tem 2 APs conta 1 vez no plano de carreira) · <b>${apEst}</b> APs de estrutura`,false,spark(ms.map(m=>m.ap),{type:'bar',color:'var(--s-ap)',mark:ms.length-1}))+
+    tile(`FUPs ativos ${delta(mOf(addM(M.now,-1)).fup,mOf(addM(M.now,-2)).fup)}`,`${fupPag.length}`,`<b>${fupPag.filter(f=>f.origem==='proprio').length}</b> próprios · <b>${fupPag.length-fupPag.filter(f=>f.origem==='proprio').length}</b> herdados pagando · ${R0(M.fupMensal)}/mês`,false,spark(past.map(m=>m.fup),{color:'var(--s-fup)'}))+
     tile('PPs totais',N(M.pps.total,2),`produtos ${N(M.pps.prod,2)} · consultoria ${N(M.pps.w1,2)}`,false,spark(ms.map(m=>m.pps||0),{type:'bar',color:'var(--s-prod)',mark:ms.length-1}));
   renderPen();renderConv();
   document.getElementById('pCarTitle').innerText=M.prox?`Rumo a ${M.prox.n}`:'Nível máximo individual';
@@ -1093,7 +1096,7 @@ function renderClientes(){
   let t='<tr><th>Cliente</th><th class="l">Tipo</th><th class="l">AP</th><th class="l">FUP</th><th class="l">Consultoria</th><th class="l">Produtos</th><th>A receber</th></tr>';
   list.forEach(c=>{
     const aps=[...c.ap].sort((a,b)=>(b.assinatura||'').localeCompare(a.assinatura||''));
-    const ap=aps.find(x=>!INATIVO.test(x.status))||aps[0];
+    const ap=aps.find(x=>!inat(x))||aps[0];
     const apTxt=ap?(ap.parcelas.length?`<span class="prog"><span style="width:${ap.parcelas.filter(p=>p.pago).length/ap.parcelas.length*100}%"></span></span>${ap.parcelas.filter(p=>p.pago).length}/${ap.parcelas.length}`:'à vista')+(c.ap.length>1?` <span class="muted">· ${c.ap.length} APs</span>`:''):'<span class="muted">—</span>';
     const fupTxt=c.fupAtivo?esc((c.fupAtivo.plano.match(/^\w+/)||[''])[0]):(c.fup.length?`<span class="muted">${esc(c.fup[0].status)}</span>`:'<span class="muted">—</span>');
     const cs2=consStatus(c);
@@ -1114,7 +1117,7 @@ function clienteDetalhe(c){
     const info=M.apInfo[x.id];
     const naoConta=cCat(x)==='ap'&&!isOwnAP(x);
     const origem=cCat(x)==='ap'?(isOwnAP(x)?'<span class="tag t-own">Sua</span>':x.origem==='proprio'?'<span class="tag t-mute" title="Assinada antes de out/25: não conta para você">Antes de out/25</span>':'<span class="tag t-her">Estrutura</span>'):(x.origem==='proprio'?'<span class="tag t-own">Sua</span>':'<span class="tag t-her">Estrutura</span>');
-    return `<tr class="${INATIVO.test(x.status)?'off':''}"><td>${esc(x.produto)}</td><td>${esc(x.parceira)}</td><td><span class="tag ${st(x.status)}">${esc(x.status)}</span></td><td>${dm(x.assinatura)}</td><td>${origem}</td><td class="r">${R(x.valor)}</td><td>${tot?`<span class="prog"><span style="width:${pagas/tot*100}%"></span></span>${pagas}/${tot}`:'—'}</td><td class="r">${info&&info.unit?R(info.unit)+'/parcela':''}</td><td class="r">${x.origem==='proprio'&&!naoConta?N(x.pps,2):'<span class="muted">—</span>'}</td></tr>`;}).join('');
+    return `<tr class="${inat(x)?'off':''}"><td>${esc(x.produto)}</td><td>${esc(x.parceira)}</td><td><span class="tag ${st(x.status)}">${esc(x.status)}</span></td><td>${dm(x.assinatura)}</td><td>${origem}</td><td class="r">${R(x.valor)}</td><td>${tot?`<span class="prog"><span style="width:${pagas/tot*100}%"></span></span>${pagas}/${tot}`:'—'}</td><td class="r">${info&&info.unit?R(info.unit)+'/parcela':''}</td><td class="r">${x.origem==='proprio'&&!naoConta?N(x.pps,2):'<span class="muted">—</span>'}</td></tr>`;}).join('');
   const hist=M.lines.filter(l=>l.real&&norm(l.cliente)===c.k).sort((a,b)=>b.data.localeCompare(a.data)).slice(0,6);
   return `<div class="sub-t">Contratos no W1nner</div><div class="scroll"><table class="mini"><tr><th>Produto</th><th>Parceira</th><th>Status</th><th>Assinatura</th><th>Conta para</th><th class="r">Valor</th><th>Parcelas</th><th class="r">Sua comissão</th><th class="r">PPs</th></tr>${rows||'<tr><td colspan="9" class="muted">Sem contratos no W1nner (recebe comissão como estrutura).</td></tr>'}</table></div>
   ${hist.length?`<div class="sub-t" style="margin-top:16px">Últimas comissões</div><table class="mini"><tr><th>Crédito</th><th>Tipo</th><th>Descrição</th><th class="r">Valor</th></tr>${hist.map(l=>`<tr><td>${dm(l.data)}</td><td>${({ap:'AP',fup:'FUP',prod:'Produto'})[l.tipo]}</td><td class="muted">${esc(l.desc)}</td><td class="r">${R(l.valor)}</td></tr>`).join('')}</table>`:''}
